@@ -1,5 +1,6 @@
 import re
 from urllib.parse import urlparse
+from bs4 import BeautifulSoup
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -15,7 +16,19 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    return list()
+    # this currently runs for a while and must be stopped with a keyboard interrupt (ctrl+C)
+    hyperlinks = []  # will be returned at end of function
+    if (resp and resp.raw_response and resp.raw_response.content):
+        # if there is a response and if that response has content, parse it
+        soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
+        for link in soup.find_all('a'):
+            # grab all urls from page's <a> tags using beautiful soup
+            url = link.get('href')
+            if is_valid(url):
+                # if url is valid, append it to hyperlinks
+                hyperlinks.append(url)
+                # print(url)
+    return hyperlinks
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
@@ -33,7 +46,8 @@ def is_valid(url):
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$"
+            + r"#", parsed.path.lower())
 
     except TypeError:
         print ("TypeError for ", parsed)
