@@ -16,7 +16,7 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    # this currently runs for a while and must be stopped with a keyboard interrupt (ctrl+C)
+    # NOTE: this currently runs for a while and must be stopped with a keyboard interrupt (ctrl+C)
     hyperlinks = []  # will be returned at end of function
     if (resp and resp.raw_response and resp.raw_response.content):
         # if there is a response and if that response has content, parse it
@@ -25,7 +25,10 @@ def extract_next_links(url, resp):
             # grab all urls from page's <a> tags using beautiful soup
             url = link.get('href')
             if is_valid(url):
-                # if url is valid, append it to hyperlinks
+                # if url is valid, try to defragment it (remove everything after the # character)
+                # url will remain unchanged if it is not fragmented
+                url = re.sub(r"#.*$", "", url)
+                # append url to hyperlinks
                 hyperlinks.append(url)
                 # print(url)
     return hyperlinks
@@ -47,7 +50,7 @@ def is_valid(url):
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$"
-            + r"#", parsed.path.lower())
+            + r"|#", parsed.path.lower())
 
     except TypeError:
         print ("TypeError for ", parsed)
