@@ -18,13 +18,13 @@ def extract_next_links(url, resp):
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     # NOTE: this currently runs for a while and must be stopped with a keyboard interrupt (ctrl+C)
     hyperlinks = []  # will be returned at end of function
-    if (resp and resp.raw_response and resp.raw_response.content):
+    if (resp and resp.status == 200 and resp.raw_response and resp.raw_response.content):
         # if there is a response and if that response has content, parse it
         soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
         for link in soup.find_all('a'):
             # grab all urls from page's <a> tags using beautiful soup
             url = link.get('href')
-            if is_valid(url):
+            if is_valid(url) and (url not in hyperlinks):
                 # if url is valid, try to defragment it (remove everything after the # character)
                 # url will remain unchanged if it is not fragmented
                 url = re.sub(r"#.*$", "", url)
@@ -41,7 +41,7 @@ def is_valid(url):
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
             return False
-        return not re.match(
+        return re.match(r"(.+?\.)?(ics|cs|informatics|stat)\.uci\.edu", parsed.netloc) and not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
             + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
@@ -51,7 +51,9 @@ def is_valid(url):
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$"
             + r"|#", parsed.path.lower())
-
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
+def change_url_to_absolute(url):
+    pass
