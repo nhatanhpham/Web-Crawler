@@ -15,7 +15,7 @@ class Our_Scraper():
         # This is our log file that we will write to
         self.logger = get_logger("Token-Dictionary", "Token_Dict")
 
-    def scraper(url, resp):
+    def scraper(self, url, resp):
         links = extract_next_links(url, resp)
         return [link for link in links if is_valid(link)]
 
