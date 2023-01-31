@@ -1,14 +1,16 @@
 import re
 from urllib.parse import urlparse
+from urllib.parse import urljoin
+from utils import get_logger
 import os.path
 from bs4 import BeautifulSoup
 from collections import defaultdict
-#from nltk.tokenize import word_tokenize
+from nltk.tokenize import word_tokenize
 
 class Our_Scraper:
     def __init__(self):
         # Instead of using nltk stopwords, we used the exact stopwords given in the assignment
-        self.stop_words = generate_stop_words()
+        self.stop_words = Our_Scraper.generate_stop_words()
 
         # Stores all of the tokens for the pages we visit
         self.token_dict = defaultdict(int)
@@ -97,7 +99,8 @@ def extract_next_links(url, resp):
             if not check_if_absolute(url):
                 #convert to absolute url
                 print("relative url", url)
-                #change_url_to_absolute(url, resp.url)
+                url = change_url_to_absolute(url, resp)
+                print("after convert", url)
             if is_valid(url) and (url not in hyperlinks):
                 # if url is valid, try to defragment it (remove everything after the # character)
                 # url will remain unchanged if it is not fragmented
@@ -130,16 +133,14 @@ def is_valid(url):
         raise
 
 def check_if_absolute(url):
-    #returns true if url is absolute, netloc != '' 
-    #returns false if url is relative
-    #add additional checks to check for / ./ ../
-    #Note: check for '/' first (use regex)
-    return bool(urlparse(url).netloc)
+    #use regex to check if url is relative
+    #returns true if url is relative
+    #returns false if url is absolute or cases like #
+    return bool(re.match(r'^[.]*[\/].+$', url))
 
-def change_url_to_absolute(url):
-    #make sure it is relative
-    #whenerv u encounter relativee links just appebd it to the actual url of the page by resp.url
-    #url = link.get 
-    pass
+
+def change_url_to_absolute(url, resp):
+    return urljoin(resp.url, url)
+
 
 
