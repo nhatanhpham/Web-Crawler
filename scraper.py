@@ -2,10 +2,22 @@ import re
 from urllib.parse import urlparse
 import os.path
 from bs4 import BeautifulSoup
+from collections import defaultdict
 
-def scraper(url, resp):
-    links = extract_next_links(url, resp)
-    return [link for link in links if is_valid(link)]
+class Our_Scraper():
+    def __init__(self):
+        # Stores all of the tokens for the pages we visit
+        self.token_dict = defaultdict(int)
+
+        # After we tokenize ??? pages, we will write our token_dict to a log file
+        self.counter = 0
+
+        # This is our log file that we will write to
+        self.logger = get_logger("Token-Dictionary", "Token_Dict")
+
+    def scraper(url, resp):
+        links = extract_next_links(url, resp)
+        return [link for link in links if is_valid(link)]
 
 def extract_next_links(url, resp):
     # Implementation required.
