@@ -1,5 +1,6 @@
 import re
 from urllib.parse import urlparse
+import os.path
 from bs4 import BeautifulSoup
 
 def scraper(url, resp):
@@ -24,13 +25,19 @@ def extract_next_links(url, resp):
         for link in soup.find_all('a'):
             # grab all urls from page's <a> tags using beautiful soup
             url = link.get('href')
+            #check if url is relative 
+            #print("url before check", url)
+            if not check_if_absolute(url):
+                #convert to absolute url
+                print("relative url", url)
+                #change_url_to_absolute(url, resp.url)
             if is_valid(url) and (url not in hyperlinks):
                 # if url is valid, try to defragment it (remove everything after the # character)
                 # url will remain unchanged if it is not fragmented
                 url = re.sub(r"#.*$", "", url)
                 # append url to hyperlinks
                 hyperlinks.append(url)
-                # print(url)
+                print(url)
     return hyperlinks
 
 def is_valid(url):
@@ -55,5 +62,15 @@ def is_valid(url):
         print ("TypeError for ", parsed)
         raise
 
+def check_if_absolute(url):
+    #returns true if url is absolute, netloc != '' 
+    #returns false if url is relative
+    #add additional checks to check for / ./ ../
+    #Note: check for '/' first (use regex)
+    return bool(urlparse(url).netloc)
+
 def change_url_to_absolute(url):
+    #make sure it is relative
+    #whenerv u encounter relativee links just appebd it to the actual url of the page by resp.url
+    #url = link.get 
     pass
