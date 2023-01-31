@@ -30,7 +30,7 @@ def extract_next_links(url, resp):
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     # NOTE: this currently runs for a while and must be stopped with a keyboard interrupt (ctrl+C)
-    hyperlinks = []  # will be returned at end of function
+    hyperlinks = set()  # will be returned at end of function
     if (resp and resp.status == 200 and resp.raw_response and resp.raw_response.content):
         # if there is a response and if that response has content, parse it
         soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
@@ -47,10 +47,10 @@ def extract_next_links(url, resp):
                 # if url is valid, try to defragment it (remove everything after the # character)
                 # url will remain unchanged if it is not fragmented
                 url = re.sub(r"#.*$", "", url)
-                # append url to hyperlinks
-                hyperlinks.append(url)
+                # add url to hyperlinks
+                hyperlinks.add(url)
                 print(url)
-    return hyperlinks
+    return list(hyperlinks)
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
