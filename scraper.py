@@ -3,21 +3,76 @@ from urllib.parse import urlparse
 import os.path
 from bs4 import BeautifulSoup
 from collections import defaultdict
+#from nltk.tokenize import word_tokenize
 
-class Our_Scraper():
+class Our_Scraper:
     def __init__(self):
+        # Instead of using nltk stopwords, we used the exact stopwords given in the assignment
+        self.stop_words = generate_stop_words()
+
         # Stores all of the tokens for the pages we visit
         self.token_dict = defaultdict(int)
 
+        # Keeps track of how many unique pages we found
+        self.pages = 0
+
         # After we tokenize ??? pages, we will write our token_dict to a log file
         self.counter = 0
+
+        # Keeps track of the longest page in terms of the # of words
+        self.max_words = 0
 
         # This is our log file that we will write to
         self.logger = get_logger("Token-Dictionary", "Token_Dict")
 
     def scraper(self, url, resp):
-        links = extract_next_links(url, resp)
-        return [link for link in links if is_valid(link)]
+        # We found another unique page, even if we don't crawl it
+        self.pages += 1
+
+        # If we have seen over ??? pages, write our token dict to logs and then reset it
+        self.counter += 1
+        #if self.counter > ??:
+        #    self.logger.info(self.token_dict)
+        #    self.token_dict.clear()
+        #    self.counter = 0
+
+        soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
+
+        # We need to change this to only crawl good pages that meet our criteria
+        if True:
+            # Extract all the text from the page into tokens
+            tokens = word_tokenize(soup.get_text())
+            word_count = 0
+
+            for token in tokens:
+                # Keep track of how many words this page has, regardless of it is a stopword
+                word_count += 1
+
+                if token.casefold() not in self.stop_words:
+                    self.token_dict[token] += 1
+            
+            if word_count > self.max_words:
+                self.max_words = word_count
+
+            # Add a portion to keep track/count subdomain pages
+
+            links = extract_next_links(url, resp)
+            return [link for link in links if is_valid(link)]
+        return []
+
+    @staticmethod 
+    def generate_stop_words():
+        input_path = "Stop_Words.txt"
+        input_file = open(input_path, 'r')
+
+        stop_words = set()
+        for word in input_file:
+            stop_words.add(word[:-1])
+
+        input_file.close()
+
+        return stop_words
+    
 
 def extract_next_links(url, resp):
     # Implementation required.
@@ -86,3 +141,5 @@ def change_url_to_absolute(url):
     #whenerv u encounter relativee links just appebd it to the actual url of the page by resp.url
     #url = link.get 
     pass
+
+
