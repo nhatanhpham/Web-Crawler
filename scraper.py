@@ -5,7 +5,9 @@ from utils import get_logger
 import os.path
 from bs4 import BeautifulSoup
 from collections import defaultdict
+import nltk
 from nltk.tokenize import word_tokenize
+nltk.download('punkt')
 
 class Our_Scraper:
     def __init__(self):
@@ -96,11 +98,11 @@ def extract_next_links(url, resp):
             url = link.get('href')
             #check if url is relative 
             #print("url before check", url)
-            if not check_if_absolute(url):
+            if url is not None and check_if_relative(url):
                 #convert to absolute url
-                print("relative url", url)
+                #print("relative url", url)
                 url = change_url_to_absolute(url, resp)
-                print("after convert", url)
+                #print("after convert", url)
             if is_valid(url) and (url not in hyperlinks):
                 # if url is valid, try to defragment it (remove everything after the # character)
                 # url will remain unchanged if it is not fragmented
@@ -132,7 +134,7 @@ def is_valid(url):
         print ("TypeError for ", parsed)
         raise
 
-def check_if_absolute(url):
+def check_if_relative(url):
     #use regex to check if url is relative
     #returns true if url is relative
     #returns false if url is absolute or cases like #
