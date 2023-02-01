@@ -51,10 +51,10 @@ class Our_Scraper:
         # We also do this checking in the extract_next_links function, I think one of them should not duplicate this
         if (resp and resp.status == 200 and resp.raw_response and resp.raw_response.content):
             soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
-
-            # Should we store soup.get_text() so we don't need to make subsequent calls?
-            whitespace = soup.get_text().count('\n') + soup.get_text().count(' ') + soup.get_text().count('\v') 
-            + soup.get_text().count('\t') + soup.get_text().count('\r') + soup.get_text().count('\f')
+            text = soup.get_text()
+            
+            whitespace = text.count('\n') + text.count(' ') + text.count('\v') 
+            + text.count('\t') + text.count('\r') + text.count('\f')
 
             #if len(soup.get_text()) - whitespace < 400:
                 #print("***TEXT SIZE***", len(soup.get_text()), len(soup.get_text()) - whitespace, soup.get_text(), resp.raw_response.content)
@@ -82,8 +82,8 @@ class Our_Scraper:
 
                 # Add a portion to keep track/count subdomain pages
 
-                links = extract_next_links(url, resp)
-                return [link for link in links if is_valid(link)]
+                links = extract_next_links(url, resp, soup)
+                return links
         return []
 
     @staticmethod 
@@ -111,13 +111,13 @@ class Our_Scraper:
                 except EOFError:
                     break
 
-    def check_subdomain(self, url)
+    def check_subdomain(self, url):
         match = self.subdomain_regex.match(url)
         if match:
             self.subdomains[url] += 1
     
 
-def extract_next_links(url, resp):
+def extract_next_links(url, resp, soup):
     # Implementation required.
     # url: the URL that was used to get the page
     # resp.url: the actual url of the page
@@ -129,26 +129,20 @@ def extract_next_links(url, resp):
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     # NOTE: this currently runs for a while and must be stopped with a keyboard interrupt (ctrl+C)
     hyperlinks = set()  # will be returned at end of function
-    if (resp and resp.status == 200 and resp.raw_response and resp.raw_response.content):
-        # if there is a response and if that response has content, parse it
-        soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
-        for link in soup.find_all('a'):
-            # grab all urls from page's <a> tags using beautiful soup
-            url = link.get('href')
-            #check if url is relative 
-            #print("url before check", url)
-            if url is not None and check_if_relative(url):
-                #convert to absolute url
-                #print("relative url", url)
-                url = change_url_to_absolute(url, resp)
-                #print("after convert", url)
-            if is_valid(url) and (url not in hyperlinks):
-                # if url is valid, try to defragment it (remove everything after the # character)
-                # url will remain unchanged if it is not fragmented
-                url = re.sub(r"#.*$", "", url)
-                # add url to hyperlinks
-                hyperlinks.add(url)
-                #print(url)
+    for link in soup.find_all('a'):
+        # grab all urls from page's <a> tags using beautiful soup
+        url = link.get('href')
+
+        #check if url is relative 
+        #if url is not None and check_if_relative(url):
+            #url = change_url_to_absolute(url, resp)
+        if is_valid(url) and (url not in hyperlinks):
+            # if url is valid, try to defragment it (remove everything after the # character)
+            # url will remain unchanged if it is not fragmented
+            url = re.sub(r"#.*$", "", url)
+            # add url to hyperlinks
+            hyperlinks.add(url)
+            #print(url)
     return list(hyperlinks)
 
 def is_valid(url):
@@ -159,6 +153,7 @@ def is_valid(url):
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
             return False
+        #TO-DO: check url for calendar or uploads
         return re.match(r"(.+?\.)?(ics|cs|informatics|stat)\.uci\.edu", parsed.netloc) and not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
@@ -167,18 +162,16 @@ def is_valid(url):
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$"
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz|apk)$"
             + r"|#", parsed.path.lower())
     except TypeError:
         print ("TypeError for ", parsed)
         raise
 
 def check_if_relative(url):
-    #use regex to check if url is relative
-    #returns true if url is relative
-    #returns false if url is absolute or cases like #
     return bool(re.match(r'^[.]*[\/].+$', url))
 
+#TO-DO: parse resp.url for only til the end of authority and take care of other cases outside of /
 def change_url_to_absolute(url, resp):
     return urljoin(resp.url, url)
 
