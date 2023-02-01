@@ -43,15 +43,16 @@ class Our_Scraper:
         self.check_subdomain(url)
 
         # If we have seen over ??? pages, write our token dict to logs and then reset it
-        
         if self.counter > 100:
             self.add_to_pickle(self.token_dict)
             self.token_dict.clear()
             self.counter = 0
 
+        # We also do this checking in the extract_next_links function, I think one of them should not duplicate this
         if (resp and resp.status == 200 and resp.raw_response and resp.raw_response.content):
             soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
 
+            # Should we store soup.get_text() so we don't need to make subsequent calls?
             whitespace = soup.get_text().count('\n') + soup.get_text().count(' ') + soup.get_text().count('\v') 
             + soup.get_text().count('\t') + soup.get_text().count('\r') + soup.get_text().count('\f')
 
