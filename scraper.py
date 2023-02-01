@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from collections import defaultdict
 import nltk
 from nltk.tokenize import word_tokenize
+import pickle
 #nltk.download('punkt')
 
 class Our_Scraper:
@@ -16,6 +17,9 @@ class Our_Scraper:
 
         # Stores all of the tokens for the pages we visit
         self.token_dict = defaultdict(int)
+
+        # Defines the name of our pickle file to store all the token dictionaries
+        self.pickle_name = "Dicts_Storage"
 
         # Keeps track of how many unique pages we found
         self.pages = 0
@@ -35,10 +39,11 @@ class Our_Scraper:
 
         # If we have seen over ??? pages, write our token dict to logs and then reset it
         self.counter += 1
-        #if self.counter > ??:
-        #    self.logger.info(self.token_dict)
-        #    self.token_dict.clear()
-        #    self.counter = 0
+        if self.counter > 100:
+            self.Add_To_Pickle(self.token_dict)
+            self.token_dict.clear()
+            self.counter = 0
+
         if (resp and resp.status == 200 and resp.raw_response and resp.raw_response.content):
             soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
 
@@ -85,6 +90,18 @@ class Our_Scraper:
         input_file.close()
 
         return stop_words
+
+    def Add_To_Pickle(self, dictionary):
+        with open(self.pickle_name, 'a+b') as pickle_file:
+            pickle.dump(dictionary, pickle_file)
+
+    def Read_From_Pickle(self):
+        with open(self.pickle_name, 'rb') as pickle_file:
+            while True:
+                try:
+                    yield pickle.load(pickle_file)
+                except EOFError:
+                    break
     
 
 def extract_next_links(url, resp):
