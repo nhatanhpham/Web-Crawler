@@ -8,6 +8,7 @@ from collections import defaultdict
 import nltk
 from nltk.tokenize import word_tokenize
 import pickle
+import sys
 #nltk.download('punkt')
 
 class Our_Scraper:
@@ -29,9 +30,11 @@ class Our_Scraper:
 
         # Keeps track of the longest page in terms of the # of words
         self.max_words = 0
+        self.max_page = ''
 
-        # This is a regular expression to get the subdomains of ics.uci.edu
-        self.subdomain_regex = re.compile(r".+.ics.uci.edu")
+        # This are the regular expressions to validate the subdomains of ics.uci.edu
+        self.subdomain_good = re.compile(r".+//.+\.ics\.uci\.edu")
+        self.subdomain_ignore = re.compile(r".+//www\.ics\.uci\.edu")
 
         # This dictionary keeps track of the subdomains and the count of their pages
         self.subdomains = defaultdict(int)
@@ -42,11 +45,9 @@ class Our_Scraper:
 
         self.check_subdomain(url)
 
-        # If we have seen over ??? pages, write our token dict to logs and then reset it
+        # If we have seen over 100 pages, write our token dict to logs and then reset it
         if self.counter > 100:
-            self.add_to_pickle(self.token_dict)
-            self.token_dict.clear()
-            self.counter = 0
+            self.add_to_pickle()
 
         # We also do this checking in the extract_next_links function, I think one of them should not duplicate this
         if (resp and resp.status == 200 and resp.raw_response and resp.raw_response.content):
@@ -79,6 +80,7 @@ class Our_Scraper:
                 
                 if word_count > self.max_words:
                     self.max_words = word_count
+                    self.max_page = url
 
                 # Add a portion to keep track/count subdomain pages
 
@@ -99,10 +101,16 @@ class Our_Scraper:
 
         return stop_words
 
-    def add_to_pickle(self, dictionary):
+    # Dumps the current token_dict to the pickle file
+    # Also it clears the token_dict and sets the counter to 0
+    def add_to_pickle(self):
         with open(self.pickle_name, 'a+b') as pickle_file:
-            pickle.dump(dictionary, pickle_file)
+            pickle.dump(self.token_dict, pickle_file)
 
+        self.token_dict.clear()
+        self.counter = 0
+
+    # Returns all of the dictionaries from the pickle file
     def read_from_pickle(self):
         with open(self.pickle_name, 'rb') as pickle_file:
             while True:
@@ -111,11 +119,49 @@ class Our_Scraper:
                 except EOFError:
                     break
 
-    def check_subdomain(self, url)
-        match = self.subdomain_regex.match(url)
-        if match:
-            self.subdomains[url] += 1
-    
+    # This checks if the given url is a subdomain of "ics.uci.edu", and if it is add 1 to the page
+    # count for that subdomain
+    def check_subdomain(self, url):
+        match = self.subdomain_good.match(url)
+
+        if match and not self.subdomain_ignore.match(url):
+            self.subdomains[match.group(0)] += 1
+
+    # This loads all of the dictionaries from the pickle file, makes one large dictionary 
+    # of the frequency of each token, sorts it, and then returns the keys
+    def make_freq_dict(self):
+        total_token_dict = defaultdict(int)
+        
+        for token_dict in self.read_from_pickle():
+            for token, freq in token_dict.items():
+                total_token_dict[token] += freq
+
+        for token, _ in sorted(total_token_dict.items(), key = (lambda item : (-item[1], item[0]))):
+            yield token
+
+    # This gathers all of the data and prints out the report to the file named "Report.txt"
+    def make_report(self):
+        std_stdout = sys.stdout
+        with open("Report.txt", 'w') as report:
+            sys.stdout = report
+            print(f"1. We found {self.pages} unique pages\n")
+            print(f"2. The longest page in terms of the number of words is {self.max_page}\n")
+
+            print("3. The 50 most common words in the entire set of pages crawled under these domains are:")
+            counter = 50
+            for word in self.make_freq_dict():
+                if counter <= 0:
+                    break
+                print(word)
+                counter -= 1
+            
+            print(f"\n4. We found {len(self.subdomains)} in the ics.uci.edu domain.\n")
+
+            for subdomain, freq in sorted(self.subdomains.items(), key = (lambda item : (item[0], -item[1]))):
+                print(f"{subdomain}, {freq}")
+
+        sys.stdout = std_stdout
+
 
 def extract_next_links(url, resp):
     # Implementation required.
