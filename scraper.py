@@ -1,6 +1,5 @@
 import re
-from urllib.parse import urlparse
-from urllib.parse import urljoin
+from urllib.parse import urlparse, urljoin
 from utils import get_logger
 import os.path
 from bs4 import BeautifulSoup
@@ -180,8 +179,8 @@ def extract_next_links(url, resp, soup):
         url = link.get('href')
 
         #check if url is relative 
-        #if url is not None and check_if_relative(url):
-            #url = change_url_to_absolute(url, resp)
+        if url is not None:
+            url = change_url_to_absolute(url, resp)
         if is_valid(url) and (url not in hyperlinks):
             # if url is valid, try to defragment it (remove everything after the # character)
             # url will remain unchanged if it is not fragmented
@@ -199,8 +198,12 @@ def is_valid(url):
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
             return False
-        #TO-DO: check url for calendar or uploads
-        return re.match(r"(.+?\.)?(ics|cs|informatics|stat)\.uci\.edu", parsed.netloc) and not re.match(
+        if not re.match(r"(.+?\.)?(ics|cs|informatics|stat)\.uci\.edu", parsed.netloc):
+            return False
+        if re.match(r"^.*(calendar|uploads|files).*$", parsed.path.lower()):
+            return False
+        #TO-DO: the whole of swiki.ics.uci.edu is a trap
+        return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
             + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
@@ -219,7 +222,15 @@ def check_if_relative(url):
 
 #TO-DO: parse resp.url for only til the end of authority and take care of other cases outside of /
 def change_url_to_absolute(url, resp):
-    return urljoin(resp.url, url)
+    if url.startswith('//'):
+        return urljoin(resp.url, url)
+    elif url.startswith('/'):
+        parsedResp = urlparse(resp.url)
+        baseUrl = parsedResp._replace(path='', params='', query='', fragment='').geturl()
+        return urljoin(baseUrl, url)
+    elif url.startswith('#'):
+        return resp.url
+    return url
 
 
 
