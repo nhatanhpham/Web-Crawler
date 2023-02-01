@@ -66,7 +66,8 @@ class Our_Scraper:
                     # Keep track of how many words this page has, regardless of it is a stopword
                         word_count += 1
 
-                        if token.casefold() not in self.stop_words:
+                        token = token.casefold()
+                        if token not in self.stop_words:
                             self.token_dict[token] += 1
                 
                 if word_count > self.max_words:
