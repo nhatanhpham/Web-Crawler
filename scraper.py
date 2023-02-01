@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from collections import defaultdict
 import nltk
 from nltk.tokenize import word_tokenize
-nltk.download('punkt')
+#nltk.download('punkt')
 
 class Our_Scraper:
     def __init__(self):
@@ -39,29 +39,36 @@ class Our_Scraper:
         #    self.logger.info(self.token_dict)
         #    self.token_dict.clear()
         #    self.counter = 0
+        if (resp and resp.status == 200 and resp.raw_response and resp.raw_response.content):
+            soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
 
-        soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
+            whitespace = soup.get_text().count('\n') + soup.get_text().count(' ') + soup.get_text().count('\v') 
+            + soup.get_text().count('\t') + soup.get_text().count('\r') + soup.get_text().count('\f')
 
-        # We need to change this to only crawl good pages that meet our criteria
-        if True:
-            # Extract all the text from the page into tokens
-            tokens = word_tokenize(soup.get_text())
-            word_count = 0
+            #if len(soup.get_text()) - whitespace < 400:
+                #print("***TEXT SIZE***", len(soup.get_text()), len(soup.get_text()) - whitespace, soup.get_text(), resp.raw_response.content)
 
-            for token in tokens:
-                # Keep track of how many words this page has, regardless of it is a stopword
-                word_count += 1
+            # We need to change this to only crawl good pages that meet our criteria
+            #Crawl all pages with high textual information content > 400 characters excluding whitespace
+            if len(soup.get_text()) - whitespace > 400:
+                # Extract all the text from the page into tokens
+                tokens = word_tokenize(soup.get_text())
+                word_count = 0
 
-                if token.casefold() not in self.stop_words:
-                    self.token_dict[token] += 1
-            
-            if word_count > self.max_words:
-                self.max_words = word_count
+                for token in tokens:
+                    # Keep track of how many words this page has, regardless of it is a stopword
+                    word_count += 1
 
-            # Add a portion to keep track/count subdomain pages
+                    if token.casefold() not in self.stop_words:
+                        self.token_dict[token] += 1
+                
+                if word_count > self.max_words:
+                    self.max_words = word_count
 
-            links = extract_next_links(url, resp)
-            return [link for link in links if is_valid(link)]
+                # Add a portion to keep track/count subdomain pages
+
+                links = extract_next_links(url, resp)
+                return [link for link in links if is_valid(link)]
         return []
 
     @staticmethod 
@@ -109,7 +116,7 @@ def extract_next_links(url, resp):
                 url = re.sub(r"#.*$", "", url)
                 # add url to hyperlinks
                 hyperlinks.add(url)
-                print(url)
+                #print(url)
     return list(hyperlinks)
 
 def is_valid(url):
@@ -139,7 +146,6 @@ def check_if_relative(url):
     #returns true if url is relative
     #returns false if url is absolute or cases like #
     return bool(re.match(r'^[.]*[\/].+$', url))
-
 
 def change_url_to_absolute(url, resp):
     return urljoin(resp.url, url)
