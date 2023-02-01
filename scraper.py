@@ -57,7 +57,7 @@ class Our_Scraper:
 
                 for token in tokens:
                     # make sure work is just not a symbol before counting it and adding to self.token_dict
-                    if (not re.match(r"\W|_", token)):
+                    if (not re.match(r"^(\W|_)+$", token)):
                     # Keep track of how many words this page has, regardless of it is a stopword
                         word_count += 1
 
