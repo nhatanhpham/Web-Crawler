@@ -30,17 +30,22 @@ class Our_Scraper:
         # Keeps track of the longest page in terms of the # of words
         self.max_words = 0
 
-        # This is our log file that we will write to
-        self.logger = get_logger("Token-Dictionary", "Token_Dict")
+        # This is a regular expression to get the subdomains of ics.uci.edu
+        self.subdomain_regex = re.compile(r".+.ics.uci.edu")
+
+        # This dictionary keeps track of the subdomains and the count of their pages
+        self.subdomains = defaultdict(int)
 
     def scraper(self, url, resp):
         # We found another unique page, even if we don't crawl it
         self.pages += 1
 
+        self.check_subdomain(url)
+
         # If we have seen over ??? pages, write our token dict to logs and then reset it
-        self.counter += 1
+        
         if self.counter > 100:
-            self.Add_To_Pickle(self.token_dict)
+            self.add_to_pickle(self.token_dict)
             self.token_dict.clear()
             self.counter = 0
 
@@ -57,6 +62,7 @@ class Our_Scraper:
             #Crawl all pages with high textual information content > 400 characters excluding whitespace
             if len(soup.get_text()) - whitespace > 400:
                 # Extract all the text from the page into tokens
+                self.counter += 1
                 tokens = word_tokenize(soup.get_text())
                 word_count = 0
 
@@ -92,17 +98,22 @@ class Our_Scraper:
 
         return stop_words
 
-    def Add_To_Pickle(self, dictionary):
+    def add_to_pickle(self, dictionary):
         with open(self.pickle_name, 'a+b') as pickle_file:
             pickle.dump(dictionary, pickle_file)
 
-    def Read_From_Pickle(self):
+    def read_from_pickle(self):
         with open(self.pickle_name, 'rb') as pickle_file:
             while True:
                 try:
                     yield pickle.load(pickle_file)
                 except EOFError:
                     break
+
+    def check_subdomain(self, url)
+        match = self.subdomain_regex.match(url)
+        if match:
+            self.subdomains[url] += 1
     
 
 def extract_next_links(url, resp):
