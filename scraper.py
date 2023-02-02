@@ -184,6 +184,9 @@ def is_valid(url):
             return False
         if re.match(r"^.*(calendar|uploads|files).*$", parsed.path.lower()):
             return False
+        if re.match(r"(\d{4}-\d{2}-\d{2})|(\d{2}-\d{2}-\d{4})", parsed.path.lower()):
+            # if path contains valid numerical date format
+            return False
         #TO-DO: the whole of swiki.ics.uci.edu is a trap
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
