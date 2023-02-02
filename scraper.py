@@ -1,5 +1,5 @@
 import re
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urlparse, urljoin, urldefrag
 from utils import get_logger
 import os.path
 from bs4 import BeautifulSoup
@@ -178,14 +178,10 @@ def extract_next_links(url, resp, soup):
         # grab all urls from page's <a> tags using beautiful soup
         url = link.get('href')
 
-        #check if url is relative 
         if url is not None:
             url = change_url_to_absolute(url, resp)
-        if is_valid(url) and (url not in hyperlinks):
-            # if url is valid, try to defragment it (remove everything after the # character)
-            # url will remain unchanged if it is not fragmented
-            url = re.sub(r"#.*$", "", url)
-            # add url to hyperlinks
+
+        if is_valid(url):
             hyperlinks.add(url)
             #print(url)
     return list(hyperlinks)
@@ -220,17 +216,9 @@ def is_valid(url):
 def check_if_relative(url):
     return bool(re.match(r'^[.]*[\/].+$', url))
 
-#TO-DO: parse resp.url for only til the end of authority and take care of other cases outside of /
+#potential error if the directory url doesn't end in / but there's a relative link that starsts with ../
 def change_url_to_absolute(url, resp):
-    if url.startswith('//'):
-        return urljoin(resp.url, url)
-    elif url.startswith('/'):
-        parsedResp = urlparse(resp.url)
-        baseUrl = parsedResp._replace(path='', params='', query='', fragment='').geturl()
-        return urljoin(baseUrl, url)
-    elif url.startswith('#'):
-        return resp.url
-    return url
-
+    absolute_url = urldefrag(urljoin(resp.raw_response.url, url)).url
+    return absolute_url
 
 
