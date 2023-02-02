@@ -43,17 +43,34 @@ class Our_Scraper:
         # We also do this checking in the extract_next_links function, I think one of them should not duplicate this
         if (resp and resp.status == 200 and resp.raw_response and resp.raw_response.content):
             soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
+            
+            #Get textual information
             text = soup.get_text()
             
-            whitespace = text.count('\n') + text.count(' ') + text.count('\v') 
+            #Get count of whitespace within text
+            text_whitespace = text.count('\n') + text.count(' ') + text.count('\v') 
             + text.count('\t') + text.count('\r') + text.count('\f')
 
-            #if len(soup.get_text()) - whitespace < 400:
-                #print("***TEXT SIZE***", len(soup.get_text()), len(soup.get_text()) - whitespace, soup.get_text(), resp.raw_response.content)
+            #Calculating length of textual hyperlinks
+            textual_links = soup.findAll('a')
+
+            #Counter for length
+            hyperlink_char_count = 0
+
+            for hyperlink in textual_links:
+                #If hyperlink has text
+                if hyperlink is not None and hyperlink.string is not None:
+                    #Count chars within hyperlink
+                    hyperlink_char_count += len(hyperlink.string)
+
+            #if len(soup.get_text()) - text_whitespace < 400:
+                #print("***TEXT SIZE***", len(soup.get_text()), len(soup.get_text()) - text_whitespace, soup.get_text())
+                #print("***ONLY TEXT***", len(soup.get_text()) - text_whitespace - hyperlink_char_count)
+                #print("***HYPERLINKS***", hyperlink_char_count)
 
             # We need to change this to only crawl good pages that meet our criteria
             #Crawl all pages with high textual information content > 400 characters excluding whitespace
-            if len(soup.get_text()) - whitespace > 400:
+            if len(soup.get_text()) - text_whitespace - hyperlink_char_count > 400:
                 # Extract all the text from the page into tokens
                 tokens = word_tokenize(soup.get_text())
                 word_count = 0
