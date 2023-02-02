@@ -1,4 +1,5 @@
 import re
+import os
 from urllib.parse import urlparse, urljoin
 from utils import get_logger
 import os.path
@@ -6,47 +7,38 @@ from bs4 import BeautifulSoup
 from collections import defaultdict
 import nltk
 from nltk.tokenize import word_tokenize
-import pickle
 import sys
+import shelve
 #nltk.download('punkt')
 
 class Our_Scraper:
-    def __init__(self):
+    def __init__(self, config, restart):
+
+        # This either loads or deletes all of the previously stored data for the report
+        if os.path.exists(config.data_file) and restart:
+            os.remove(config.data_file)
+        self.data = shelve.open(config.data_file)
+        if restart:
+            self.data["Tokens"] = defaultdict(int)
+            self.data["Pages"] = 0
+            self.data["Max"] = {"Words": 0, "Page_Name": ''}
+            self.data["Subdomains"] = defaultdict(int)
+            self.data.sync()     
+
         # Instead of using nltk stopwords, we used the exact stopwords given in the assignment
         self.stop_words = Our_Scraper.generate_stop_words()
-
-        # Stores all of the tokens for the pages we visit
-        self.token_dict = defaultdict(int)
-
-        # Defines the name of our pickle file to store all the token dictionaries
-        self.pickle_name = "Dicts_Storage"
-
-        # Keeps track of how many unique pages we found
-        self.pages = 0
-
-        # After we tokenize ??? pages, we will write our token_dict to a log file
-        self.counter = 0
-
-        # Keeps track of the longest page in terms of the # of words
-        self.max_words = 0
-        self.max_page = ''
 
         # This are the regular expressions to validate the subdomains of ics.uci.edu
         self.subdomain_good = re.compile(r".+//.+\.ics\.uci\.edu")
         self.subdomain_ignore = re.compile(r".+//www\.ics\.uci\.edu")
 
-        # This dictionary keeps track of the subdomains and the count of their pages
-        self.subdomains = defaultdict(int)
 
     def scraper(self, url, resp):
+
         # We found another unique page, even if we don't crawl it
-        self.pages += 1
+        self.data["Pages"] += 1
 
         self.check_subdomain(url)
-
-        # If we have seen over 100 pages, write our token dict to logs and then reset it
-        if self.counter > 100:
-            self.add_to_pickle()
 
         # We also do this checking in the extract_next_links function, I think one of them should not duplicate this
         if (resp and resp.status == 200 and resp.raw_response and resp.raw_response.content):
@@ -63,23 +55,34 @@ class Our_Scraper:
             #Crawl all pages with high textual information content > 400 characters excluding whitespace
             if len(soup.get_text()) - whitespace > 400:
                 # Extract all the text from the page into tokens
-                self.counter += 1
                 tokens = word_tokenize(soup.get_text())
                 word_count = 0
 
+                # We need to extract the dictionary of tokens from self.data in order to add to it
+                token_dict = self.data["Tokens"]
+
                 for token in tokens:
-                    # make sure work is just not a symbol before counting it and adding to self.token_dict
+                    # make sure work is just not a symbol before counting it and adding to self.data
                     if (not re.match(r"^(\W|_)+$", token)):
                     # Keep track of how many words this page has, regardless of it is a stopword
                         word_count += 1
 
                         token = token.casefold()
                         if token not in self.stop_words:
-                            self.token_dict[token] += 1
+                            token_dict[token] += 1
                 
-                if word_count > self.max_words:
-                    self.max_words = word_count
-                    self.max_page = url
+                # Store the modified dictionary of tokens back into self.data
+                self.data["Tokens"] = token_dict
+                
+                # Possibly updates the max page and its length 
+                if word_count > self.data["Max"]["Words"]:
+                    max_page = self.data["Max"]
+                    max_page["Words"] = word_count
+                    max_page["Page_Name"] = url
+                    self.data["Max"] = max_page
+
+                # Updates self.data shelve with all the new updates
+                self.data.sync()
 
                 # Add a portion to keep track/count subdomain pages
 
@@ -100,63 +103,35 @@ class Our_Scraper:
 
         return stop_words
 
-    # Dumps the current token_dict to the pickle file
-    # Also it clears the token_dict and sets the counter to 0
-    def add_to_pickle(self):
-        with open(self.pickle_name, 'a+b') as pickle_file:
-            pickle.dump(self.token_dict, pickle_file)
-
-        self.token_dict.clear()
-        self.counter = 0
-
-    # Returns all of the dictionaries from the pickle file
-    def read_from_pickle(self):
-        with open(self.pickle_name, 'rb') as pickle_file:
-            while True:
-                try:
-                    yield pickle.load(pickle_file)
-                except EOFError:
-                    break
-
     # This checks if the given url is a subdomain of "ics.uci.edu", and if it is add 1 to the page
     # count for that subdomain
     def check_subdomain(self, url):
         match = self.subdomain_good.match(url)
 
         if match and not self.subdomain_ignore.match(url):
-            self.subdomains[match.group(0)] += 1
-
-    # This loads all of the dictionaries from the pickle file, makes one large dictionary 
-    # of the frequency of each token, sorts it, and then returns the keys
-    def make_freq_dict(self):
-        total_token_dict = defaultdict(int)
-        
-        for token_dict in self.read_from_pickle():
-            for token, freq in token_dict.items():
-                total_token_dict[token] += freq
-
-        for token, _ in sorted(total_token_dict.items(), key = (lambda item : (-item[1], item[0]))):
-            yield token
+            subdomains = self.data["Subdomains"]
+            subdomains[match.group(0)] += 1
+            self.data["Subdomains"] = subdomains
 
     # This gathers all of the data and prints out the report to the file named "Report.txt"
     def make_report(self):
         std_stdout = sys.stdout
         with open("Report.txt", 'w') as report:
             sys.stdout = report
-            print(f"1. We found {self.pages} unique pages\n")
-            print(f"2. The longest page in terms of the number of words is {self.max_page}\n")
+            print(f"1. We found {self.data['Pages']} unique pages\n")
+            print(f"2. The longest page in terms of the number of words is {self.data['Max']['Page_Name']}\n")
 
             print("3. The 50 most common words in the entire set of pages crawled under these domains are:")
             counter = 50
-            for word in self.make_freq_dict():
+            for word, _ in sorted(self.data['Tokens'].items(), key = (lambda item : (-item[1], item[0]))):
                 if counter <= 0:
                     break
                 print(word)
                 counter -= 1
             
-            print(f"\n4. We found {len(self.subdomains)} in the ics.uci.edu domain.\n")
+            print(f"\n4. We found {len(self.data['Subdomains'])} subdomains in the ics.uci.edu domain.\n")
 
-            for subdomain, freq in sorted(self.subdomains.items(), key = (lambda item : (item[0], -item[1]))):
+            for subdomain, freq in sorted(self.data['Subdomains'].items(), key = (lambda item : (item[0], -item[1]))):
                 print(f"{subdomain}, {freq}")
 
         sys.stdout = std_stdout
