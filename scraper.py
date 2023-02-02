@@ -46,66 +46,60 @@ class Our_Scraper:
             
             #Get textual information
             text = soup.get_text()
-            
-            #Get count of whitespace within text
-            text_whitespace = text.count('\n') + text.count(' ') + text.count('\v') 
-            + text.count('\t') + text.count('\r') + text.count('\f')
+            hyperlinks = soup.findAll('a')
 
-            #Calculating length of textual hyperlinks
-            textual_links = soup.findAll('a')
-
-            #Counter for length
-            hyperlink_char_count = 0
-
-            for hyperlink in textual_links:
-                #If hyperlink has text
-                if hyperlink is not None and hyperlink.string is not None:
-                    #Count chars within hyperlink
-                    hyperlink_char_count += len(hyperlink.string)
-
-            #if len(soup.get_text()) - text_whitespace < 400:
-                #print("***TEXT SIZE***", len(soup.get_text()), len(soup.get_text()) - text_whitespace, soup.get_text())
-                #print("***ONLY TEXT***", len(soup.get_text()) - text_whitespace - hyperlink_char_count)
-                #print("***HYPERLINKS***", hyperlink_char_count)
-
-            # We need to change this to only crawl good pages that meet our criteria
             #Crawl all pages with high textual information content > 400 characters excluding whitespace
-            if len(soup.get_text()) - text_whitespace - hyperlink_char_count > 400:
-                # Extract all the text from the page into tokens
-                tokens = word_tokenize(soup.get_text())
-                word_count = 0
-
-                # We need to extract the dictionary of tokens from self.data in order to add to it
-                token_dict = self.data["Tokens"]
-
-                for token in tokens:
-                    # make sure work is just not a symbol before counting it and adding to self.data
-                    if (not re.match(r"^(\W|_)+$", token)):
-                    # Keep track of how many words this page has, regardless of it is a stopword
-                        word_count += 1
-
-                        token = token.casefold()
-                        if token not in self.stop_words:
-                            token_dict[token] += 1
-                
-                # Store the modified dictionary of tokens back into self.data
-                self.data["Tokens"] = token_dict
-                
-                # Possibly updates the max page and its length 
-                if word_count > self.data["Max"]["Words"]:
-                    max_page = self.data["Max"]
-                    max_page["Words"] = word_count
-                    max_page["Page_Name"] = url
-                    self.data["Max"] = max_page
+            if self.high_textual_information(text, hyperlinks):
+                word_count = self.tokenize_page(text)
+                self.update_max_page(word_count, resp.url)
 
                 # Updates self.data shelve with all the new updates
                 self.data.sync()
 
-                # Add a portion to keep track/count subdomain pages
-
-                links = extract_next_links(url, resp, soup)
+                links = extract_next_links(url, resp, hyperlinks)
                 return links
         return []
+
+    #returns true only if there's more than 400 characters excluding whitespace and text
+    #that makes up hyperlinks
+    def high_textual_information(self, text, hyperlinks):
+        text_without_whitespace = sum(list(map(len, text.split())))
+        hyperlink_char_count = 0
+        for hyperlink in hyperlinks:
+            if hyperlink is not None and hyperlink.text is not None:
+                #this is an attempt to avoid pages that are pure link directories
+                hyperlink_char_count += len(hyperlink.text.strip())
+        return (text_without_whitespace - hyperlink_char_count) > 400
+
+    def tokenize_page(self, text):
+        # Extract all the text from the page into tokens
+        tokens = word_tokenize(text)
+        word_count = 0
+
+        # We need to extract the dictionary of tokens from self.data in order to add to it
+        token_dict = self.data["Tokens"]
+
+        for token in tokens:
+            # make sure work is just not a symbol before counting it and adding to self.data
+            if (not re.match(r"^(\W|_)+$", token)):
+                # Keep track of how many words this page has, regardless of it is a stopword
+                word_count += 1
+
+                token = token.casefold()
+                if token not in self.stop_words:
+                    token_dict[token] += 1
+        
+         # Store the modified dictionary of tokens back into self.data
+        self.data["Tokens"] = token_dict
+
+        return word_count      
+
+    def update_max_page(self, word_count, url):
+        if word_count > self.data["Max"]["Words"]:
+            max_page = self.data["Max"]
+            max_page["Words"] = word_count
+            max_page["Page_Name"] = url
+            self.data["Max"] = max_page
 
     @staticmethod 
     def generate_stop_words():
@@ -154,7 +148,7 @@ class Our_Scraper:
         sys.stdout = std_stdout
 
 
-def extract_next_links(url, resp, soup):
+def extract_next_links(url, resp, links):
     # Implementation required.
     # url: the URL that was used to get the page
     # resp.url: the actual url of the page
@@ -166,7 +160,7 @@ def extract_next_links(url, resp, soup):
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     # NOTE: this currently runs for a while and must be stopped with a keyboard interrupt (ctrl+C)
     hyperlinks = set()  # will be returned at end of function
-    for link in soup.find_all('a'):
+    for link in links:
         # grab all urls from page's <a> tags using beautiful soup
         url = link.get('href')
 
