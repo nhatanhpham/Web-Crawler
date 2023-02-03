@@ -7,6 +7,7 @@ from collections import defaultdict
 import sys
 import shelve
 import os
+import hashlib
 
 class Our_Scraper:
     def __init__(self, config, restart):
@@ -60,6 +61,11 @@ class Our_Scraper:
             #Crawl all pages with high textual information content > 400 characters excluding whitespace
             if self.high_textual_information(text, hyperlinks):
                 word_count = self.tokenize_page(text)
+
+                # If this page is similar in content to another page, do not crawl it
+                if self.simhash():
+                    return []
+
                 self.update_max_page(word_count, resp.url)
 
                 # Updates self.data shelve with all the new updates
@@ -87,7 +93,7 @@ class Our_Scraper:
         token_dict = self.data["Tokens"]
         
         # Keep track of the tokens on only the current page
-        current_tokens = defaultdict(int)
+        self.current_tokens = defaultdict(int)
 
         # Extract all the text from the page into an iterable
         for match in re.finditer(r"[a-zA-Z0-9']+", text):
@@ -100,40 +106,36 @@ class Our_Scraper:
                 token = token.casefold()
                 if token not in self.stop_words:
                     token_dict[token] += 1
-                    current_tokens[token] += 1
+                    self.current_tokens[token] += 1
         
          # Store the modified dictionary of tokens back into self.data
         self.data["Tokens"] = token_dict
-
-        # Detect similar pages
-        self.simhash(current_tokens)
-        print(self.fingerprint)
        
         return word_count     
     
-    def simhash(self, token_dict):
+    def simhash(self):
         words_in_binary = defaultdict(int)
         vector = []
         fingerprint_str = ""
 
-        for token in token_dict:
+        for token in self.current_tokens:
             # Dictionary of tokens containing 16 bit binary representations
-            words_in_binary[token] = self.get_token_binary(token, token_dict[token])
+            words_in_binary[token] = self.get_token_binary(token) 
 
-        for i in range(16):
+        for i in range(32):
             sum_weights = 0
             for token, binary in words_in_binary.items():
                 # print(f'binary[i] = {binary[i]}')
                 if binary[i] == '1':
-                    sum_weights += token_dict[token]
+                    sum_weights += self.current_tokens[token]
                     # print(f'for token {token}, i = {i} and binary = {binary} so adding {token_dict[token]} new_sum_weights = {sum_weights}')
                 else:
-                    sum_weights -= token_dict[token]
+                    sum_weights -= self.current_tokens[token]
                     # print(f'for token {token}, i = {i} and binary = {binary} so subtracting {token_dict[token]} to get new_sum_weights = {sum_weights}')
             # List vector formed by summing weights
             vector.append(sum_weights)
 
-        print("vector", vector)
+        # print("vector", vector)
         # 16-bit fingerprint formed from vector list
         for i in vector:
             if i > 0:
@@ -141,23 +143,56 @@ class Our_Scraper:
             else:
                 fingerprint_str += "0"
 
-        self.fingerprint.add(int(fingerprint_str))
+        if self.detect_similar(fingerprint_str):
+            return True
 
-    def get_token_binary(self, token, frequency):
-        # Get binary representation of each token
-        ascii_list = []
-        result = 1
-        # For every character of a token
-        for char in token:
-            # Append the ASCII value of that character to a list
-            ascii_list.append(ord(char))
-        for ascii_value in ascii_list:
-            # Multiply all of the ASCII values in the list
-            result *= ascii_value
-        # Multiply result with frequency of the token
-        result *= frequency
-        #Obtain unique binary hash value by modding the max words of a page. Remove first 2 to remove '0b'
-        return str(bin(result % 65536)[2:].zfill(16))
+        self.fingerprint.add(fingerprint_str)
+        return False
+
+#     def get_token_binary(self, token, frequency):
+#         # Get binary representation of each token
+#         ascii_list = []
+#         result = 1
+#         # For every character of a token
+#         for char in token:
+#             # Append the ASCII value of that character to a list
+#             ascii_list.append(ord(char))
+
+#         counter = 1
+#         for ascii_value in ascii_list:
+#             # Multiply all of the ASCII values in the list
+#             result *= ascii_value * counter
+#             counter += 1
+#         # Multiply result with frequency of the token
+#         result *= frequency 
+#         #Obtain unique binary hash value by modding the max words of a page. Remove first 2 to remove '0b'
+#         return str(bin(result % 65536)[2:].zfill(16))
+    
+    def get_token_binary(self, token):
+        hash_function = hashlib.sha1(token.encode('utf-8'))
+        #hash_function.update(token.encode('utf-8'))
+            
+        # This will get the int value of the string, within the valid representation of 32 bits
+        hash_result = int(hash_function.hexdigest(), 16) % 4294967296
+
+        # Returns the unique 16 bit binary representation of the word
+        return str(bin(hash_result)[2:].zfill(32))
+
+    def detect_similar(self, fingerprint):
+        for fp in self.fingerprint:
+            if self.get_similarity(fingerprint, fp) > 0.9:
+                return True
+            
+        return False
+
+    def get_similarity(self, fp_1, fp_2):
+        similar_bits = 0
+
+        for i in range(32):
+            if fp_1[i] == fp_2[i]:
+                similar_bits += 1
+    
+        return similar_bits / 32.0
     
 
     def update_max_page(self, word_count, url):
