@@ -172,7 +172,11 @@ class Our_Scraper:
 
     def detect_similar(self, fingerprint):
         for fp in self.fingerprint:
-            if self.get_similarity(fingerprint, fp) > 0.9:
+            if (fingerprint == fp):
+                # check if fingerprints are exact matches before computing similarity
+                return True
+            elif self.get_similarity(fingerprint, fp) > 0.9:
+                # if not, check if they are similar
                 return True
             
         return False
