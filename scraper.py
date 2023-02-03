@@ -76,6 +76,9 @@ class Our_Scraper:
 
         # We need to extract the dictionary of tokens from self.data in order to add to it
         token_dict = self.data["Tokens"]
+        
+        # Keep track of the tokens on only the current page
+        current_tokens = defaultdict(int)
 
         # Extract all the text from the page into an iterable
         for match in re.finditer(r"[a-zA-Z0-9']+", text):
@@ -88,12 +91,13 @@ class Our_Scraper:
                 token = token.casefold()
                 if token not in self.stop_words:
                     token_dict[token] += 1
+                    current_tokens[token] += 1
         
          # Store the modified dictionary of tokens back into self.data
         self.data["Tokens"] = token_dict
 
         # Detect similar pages
-        self.simhash(token_dict)
+        self.simhash(current_tokens)
         print(self.fingerprint)
        
         return word_count     
