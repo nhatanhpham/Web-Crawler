@@ -4,12 +4,9 @@ from utils import get_logger
 import os.path
 from bs4 import BeautifulSoup
 from collections import defaultdict
-import nltk
-from nltk.tokenize import word_tokenize
 import sys
 import shelve
 import os
-#nltk.download('punkt')
 
 class Our_Scraper:
     def __init__(self, config, restart):
@@ -72,14 +69,14 @@ class Our_Scraper:
         return (text_without_whitespace - hyperlink_char_count) > 400
 
     def tokenize_page(self, text):
-        # Extract all the text from the page into tokens
-        tokens = word_tokenize(text)
         word_count = 0
 
         # We need to extract the dictionary of tokens from self.data in order to add to it
         token_dict = self.data["Tokens"]
 
-        for token in tokens:
+        # Extract all the text from the page into an iterable
+        for match in re.finditer(r"[a-zA-Z0-9']+", text):
+            token = match.group()
             # make sure work is just not a symbol before counting it and adding to self.data
             if (not re.match(r"^(\W|_)+$", token)):
                 # Keep track of how many words this page has, regardless of it is a stopword
