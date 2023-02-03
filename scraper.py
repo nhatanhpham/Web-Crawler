@@ -12,8 +12,10 @@ import hashlib
 class Our_Scraper:
     def __init__(self, config, restart):
 
-        # Set of 16 bit fingerprint values
+        # Set of 32 bit fingerprint values
         self.fingerprint = set()
+        self.domains = set()
+        self.fingerprint_queries = set()
 
         # This either loads or deletes all of the previously stored data for the report
         if os.path.exists(config.data_file) and restart:
@@ -41,7 +43,6 @@ class Our_Scraper:
 
         self.check_subdomain(resp.url)
 
-
         # We also do this checking in the extract_next_links function, I think one of them should not duplicate this
         if (resp and resp.status == 200 and resp.raw_response and resp.raw_response.content and sys.getsizeof(resp.raw_response.content) <= 500000):
             soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
@@ -54,8 +55,8 @@ class Our_Scraper:
             if self.high_textual_information(text, hyperlinks):
                 word_count = self.tokenize_page(text)
 
-                # If this page is similar in content to another page, do not crawl it
-                if self.simhash():
+                # If this page is similar in content, or the url is similar to another page, do not crawl it
+                if self.split_url(url) and self.simhash():
                     return []
 
                 self.update_max_page(word_count, resp.url)
@@ -66,6 +67,18 @@ class Our_Scraper:
                 links = extract_next_links(url, resp, hyperlinks)
                 return links
         return []
+    
+    def split_url(self, url):
+        domain_query = re.compile(r"(?P<domain>[^?]+)(?P<query>\?.*)*")
+        matches = domain_query.match(url)
+        if matches.group('domain') in self.domains:
+            print("check domain", matches.group('domain'))
+            if matches.group('query'):
+                print("check query", matches.group('query'))
+                return self.simhash_query(matches.group('query'))
+        else:
+            self.domains.add(matches.group('domain'))
+            return False
 
     #returns true only if there's more than 400 characters excluding whitespace and text
     #that makes up hyperlinks
@@ -104,20 +117,53 @@ class Our_Scraper:
         self.data["Tokens"] = token_dict
        
         return word_count     
+
+    def simhash_query(self, query):
+        fingerprint_str = ""
+
+        # Get binary representation of the query
+        fingerprint_str = self.get_query_binary(query)
+        print(fingerprint_str)
+
+        if self.detect_similar(fingerprint_str):
+            print("IS SIMILAR")
+            return True
+
+        self.fingerprint_queries.add(fingerprint_str)
+        return False
+    
+    def get_query_binary(self, query):
+        hash_function = hashlib.sha1(query.encode('utf-8'))
+        #hash_function.update(token.encode('utf-8'))
+            
+        # This will get the int value of the url, within the valid representation of 32 bits
+        hash_result = int(hash_function.hexdigest(), 16) % 4294967296
+
+        # Returns the unique 32 bit binary representation of the word
+        return str(bin(hash_result)[2:].zfill(32))
+
+    def get_token_binary(self, token):
+        hash_function = hashlib.sha1(token.encode('utf-8'))
+        #hash_function.update(token.encode('utf-8'))
+            
+        # This will get the int value of the string, within the valid representation of 32 bits
+        hash_result = int(hash_function.hexdigest(), 16) % 4294967296
+
+        # Returns the unique 32 bit binary representation of the word
+        return str(bin(hash_result)[2:].zfill(32))
     
     def simhash(self):
         words_in_binary = defaultdict(int)
-        vector = []
+        token_vector = []
         fingerprint_str = ""
 
         for token in self.current_tokens:
-            # Dictionary of tokens containing 16 bit binary representations
+            # Dictionary of tokens containing 32 bit binary representations
             words_in_binary[token] = self.get_token_binary(token) 
 
         for i in range(32):
             sum_weights = 0
             for token, binary in words_in_binary.items():
-                # print(f'binary[i] = {binary[i]}')
                 if binary[i] == '1':
                     sum_weights += self.current_tokens[token]
                     # print(f'for token {token}, i = {i} and binary = {binary} so adding {token_dict[token]} new_sum_weights = {sum_weights}')
@@ -125,11 +171,10 @@ class Our_Scraper:
                     sum_weights -= self.current_tokens[token]
                     # print(f'for token {token}, i = {i} and binary = {binary} so subtracting {token_dict[token]} to get new_sum_weights = {sum_weights}')
             # List vector formed by summing weights
-            vector.append(sum_weights)
+            token_vector.append(sum_weights)
 
-        # print("vector", vector)
         # 16-bit fingerprint formed from vector list
-        for i in vector:
+        for i in token_vector:
             if i > 0:
                 fingerprint_str += "1"
             else:
@@ -140,26 +185,17 @@ class Our_Scraper:
 
         self.fingerprint.add(fingerprint_str)
         return False
-
-#     def get_token_binary(self, token, frequency):
-#         # Get binary representation of each token
-#         ascii_list = []
-#         result = 1
-#         # For every character of a token
-#         for char in token:
-#             # Append the ASCII value of that character to a list
-#             ascii_list.append(ord(char))
-
-#         counter = 1
-#         for ascii_value in ascii_list:
-#             # Multiply all of the ASCII values in the list
-#             result *= ascii_value * counter
-#             counter += 1
-#         # Multiply result with frequency of the token
-#         result *= frequency 
-#         #Obtain unique binary hash value by modding the max words of a page. Remove first 2 to remove '0b'
-#         return str(bin(result % 65536)[2:].zfill(16))
     
+    def get_url_binary(self, url):
+        hash_function = hashlib.sha1(url.encode('utf-8'))
+        #hash_function.update(token.encode('utf-8'))
+            
+        # This will get the int value of the url, within the valid representation of 32 bits
+        hash_result = int(hash_function.hexdigest(), 16) % 4294967296
+
+        # Returns the unique 32 bit binary representation of the word
+        return str(bin(hash_result)[2:].zfill(32))
+
     def get_token_binary(self, token):
         hash_function = hashlib.sha1(token.encode('utf-8'))
         #hash_function.update(token.encode('utf-8'))
@@ -167,7 +203,7 @@ class Our_Scraper:
         # This will get the int value of the string, within the valid representation of 32 bits
         hash_result = int(hash_function.hexdigest(), 16) % 4294967296
 
-        # Returns the unique 16 bit binary representation of the word
+        # Returns the unique 32 bit binary representation of the word
         return str(bin(hash_result)[2:].zfill(32))
 
     def detect_similar(self, fingerprint):
