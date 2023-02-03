@@ -11,6 +11,9 @@ import os
 class Our_Scraper:
     def __init__(self, config, restart):
 
+        # Set of 16 bit fingerprint values
+        self.fingerprint = set()
+
         # This either loads or deletes all of the previously stored data for the report
         if os.path.exists(config.data_file) and restart:
             os.remove(config.data_file)
@@ -89,7 +92,59 @@ class Our_Scraper:
          # Store the modified dictionary of tokens back into self.data
         self.data["Tokens"] = token_dict
 
-        return word_count      
+        # Detect similar pages
+        self.simhash(token_dict)
+        print(self.fingerprint)
+       
+        return word_count     
+    
+    def simhash(self, token_dict):
+        words_in_binary = defaultdict(int)
+        vector = []
+        fingerprint_str = ""
+
+        for token in token_dict:
+            # Dictionary of tokens containing 16 bit binary representations
+            words_in_binary[token] = self.get_token_binary(token, token_dict[token])
+
+        for i in range(16):
+            sum_weights = 0
+            for token, binary in words_in_binary.items():
+                #print(token, binary, token_dict[token])
+                if binary[i] == 1:
+                    sum_weights += token_dict[token]
+                else:
+                    sum_weights -= token_dict[token]
+
+            # List vector formed by summing weights
+            vector.append(sum_weights)
+
+        print("vector", vector)
+        # 16-bit fingerprint formed from vector list
+        for i in vector:
+            if i > 0:
+                fingerprint_str += "1"
+            else:
+                fingerprint_str += "0"
+
+        self.fingerprint.add(int(fingerprint_str))
+
+    def get_token_binary(self, token, frequency):
+        # Get binary representation of each token
+        ascii_list = []
+        result = 1
+        # For every character of a token
+        for char in token:
+            # Append the ASCII value of that character to a list
+            ascii_list.append(ord(char))
+        for ascii_value in ascii_list:
+            # Multiply all of the ASCII values in the list
+            result *= ascii_value
+        # Multiply result with frequency of the token
+        result *= frequency
+        #Obtain unique binary hash value by modding the max words of a page. Remove first 2 to remove '0b'
+        return bin(result % 65536)[2:].zfill(16)
+    
 
     def update_max_page(self, word_count, url):
         if word_count > self.data["Max"]["Words"]:
