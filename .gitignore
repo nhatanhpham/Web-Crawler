@@ -108,5 +108,6 @@ venv.bak/
 
 *.full.py
 *.shelve.*
+*.shelve
 Report.txt
 Dicts_Storage
