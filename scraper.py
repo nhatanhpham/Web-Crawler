@@ -218,7 +218,7 @@ class Our_Scraper:
 
         if match and not self.subdomain_ignore.match(url):
             subdomains = self.data["Subdomains"]
-            subdomains[match.group(0)] += 1
+            subdomains[match.group(0).casefold().replace('www.','')] += 1
             self.data["Subdomains"] = subdomains
 
     # This gathers all of the data and prints out the report to the file named "Report.txt"
@@ -234,8 +234,9 @@ class Our_Scraper:
             for word, _ in sorted(self.data['Tokens'].items(), key = (lambda item : (-item[1], item[0]))):
                 if counter <= 0:
                     break
-                print(word)
-                counter -= 1
+                if len(word) > 1:
+                    print(word)
+                    counter -= 1
             
             print(f"\n4. We found {len(self.data['Subdomains'])} subdomains in the ics.uci.edu domain.\n")
 
@@ -255,10 +256,8 @@ def extract_next_links(url, resp, links):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    # NOTE: this currently runs for a while and must be stopped with a keyboard interrupt (ctrl+C)
-    hyperlinks = set()  # will be returned at end of function
+    hyperlinks = set()  
     for link in links:
-        # grab all urls from page's <a> tags using beautiful soup
         url = link.get('href')
 
         if url is not None:
@@ -277,17 +276,21 @@ def is_valid(url):
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
             return False
+        #checks to see if valid domain
         if not re.match(r"(.+?\.)?(ics|cs|informatics|stat)\.uci\.edu", parsed.netloc):
             return False
+        #avoids queries that involve actions
         if re.match(r"share|attachment|rev|action|do", parsed.query):
             return False
+        #avoids calendar traps
         if re.match(r"(\d{4}-\d{2}-\d{2})|(\d{2}-\d{2}-\d{4})|(\d{2}-\d{2}-\d{2})|(\d{4}-\d{2})|(\d{2}-\d{4})", url):
             return False
+        #avoids image files
         if re.match(r"img", url):
             return False
+        #avoids directories that contain invalid files
         if re.match(r"^.*(calendar|uploads|files|attachment|wp-admin).*$", parsed.path.lower()):
             return False
-        #TO-DO: the whole of swiki.ics.uci.edu is a trap
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
@@ -296,8 +299,7 @@ def is_valid(url):
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz|apk|bib)$"
-            + r"|#", parsed.path.lower())
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz|apk|bib)$", parsed.path.lower())
     except TypeError:
         print ("TypeError for ", parsed)
         raise

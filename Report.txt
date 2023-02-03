@@ -1,124 +1,122 @@
-1. We found 10666 unique pages
+1. We found 10880 unique pages
 
 2. The longest page in terms of the number of words is http://www.ics.uci.edu/~cs224
 
 3. The 50 most common words in the entire set of pages crawled under these domains are:
-1
-s
-2
 research
-p
-e
-0
 will
 computer
 uci
-ics
-d
-n
-3
 can
-m
-l
+ics
 information
-t
 data
 students
-4
-b
-c
 one
-r
-5
 software
-f
 science
-school
-o
-student
-10
 time
-x
-policies
+school
+10
+student
 news
 bren
 course
-6
+policies
 2022
-g
 new
 may
 use
-j
 design
 project
+also
 events
+systems
+work
+program
+first
+graduate
+using
+university
+contact
+code
+engineering
+irvine
+computing
+academic
+2018
+edu
+people
+informatics
+two
+learning
+faculty
+support
+us
 
-4. We found 168 subdomains in the ics.uci.edu domain.
+4. We found 164 subdomains in the ics.uci.edu domain.
 
-http://DataGuard.ics.uci.edu, 1
-http://DataProtector.ics.uci.edu, 1
 http://alumni.ics.uci.edu, 5
 http://ambassadors.ics.uci.edu, 1
-http://archive.ics.uci.edu, 5
+http://archive.ics.uci.edu, 11
 http://asterix.ics.uci.edu, 7
 http://asterixdb.ics.uci.edu, 1
 http://awareness.ics.uci.edu, 1
-http://caesar.ics.uci.edu, 1
 http://cbcl.ics.uci.edu, 8
 http://cert.ics.uci.edu, 28
 http://cgvw.ics.uci.edu, 1
 http://checkmate.ics.uci.edu, 1
-http://chenli.ics.uci.edu, 1
 http://cherry.ics.uci.edu, 1
 http://chime.ics.uci.edu, 1
 http://cloudberry.ics.uci.edu, 2
-http://cml.ics.uci.edu, 4
+http://cml.ics.uci.edu, 3
 http://cocoa-krispies.ics.uci.edu, 1
 http://codeexchange.ics.uci.edu, 1
-http://computableplant.ics.uci.edu, 77
-http://computableplant.ics.uci.edu/alphasite/                        http:/computableplant.ics.uci.edu, 1
+http://computableplant.ics.uci.edu, 63
 http://cradl.ics.uci.edu, 15
 http://cwicsocal18.ics.uci.edu, 1
+http://dataguard.ics.uci.edu, 1
 http://datalab.ics.uci.edu, 1
+http://dataprotector.ics.uci.edu, 1
 http://dblp.ics.uci.edu, 2
 http://djp3-pc2.ics.uci.edu, 1
-http://duke.ics.uci.edu, 1
 http://duttgroup.ics.uci.edu, 1
 http://dynamo.ics.uci.edu, 1
 http://elms.ics.uci.edu, 1
-http://emj.ics.uci.edu, 1
+http://emj-pc.ics.uci.edu, 1
+http://emj.ics.uci.edu, 2
 http://evoke.ics.uci.edu, 2
 http://fano.ics.uci.edu, 32
-http://flamingo.ics.uci.edu, 85
+http://flamingo.ics.uci.edu, 60
 http://fr.ics.uci.edu, 8
 http://frost.ics.uci.edu, 1
 http://futurehealth.ics.uci.edu, 4
-http://graphics.ics.uci.edu, 9
+http://graphics.ics.uci.edu, 10
 http://graphmod.ics.uci.edu, 1
 http://hana.ics.uci.edu, 3
 http://hobbes.ics.uci.edu, 11
-http://hombao.ics.uci.edu, 1
+http://hombao.ics.uci.edu, 2
 http://honors.ics.uci.edu, 1
 http://i-sensorium.ics.uci.edu, 1
 http://ieee.ics.uci.edu, 1
-http://informatics.ics.uci.edu, 1
+http://informatics.ics.uci.edu, 2
+http://intranet.ics.uci.edu, 1
 http://ipubmed.ics.uci.edu, 1
-http://isg.ics.uci.edu, 1
+http://isg.ics.uci.edu, 3
 http://jujube.ics.uci.edu, 2
 http://kdd.ics.uci.edu, 2
 http://kgcs.ics.uci.edu, 1
 http://lolth.ics.uci.edu, 1
-http://luci.ics.uci.edu, 1
+http://luci.ics.uci.edu, 2
 http://map125.ics.uci.edu, 1
 http://mapgrid.ics.uci.edu, 1
-http://mcs.ics.uci.edu, 2
+http://mcs.ics.uci.edu, 1
 http://metaviz.ics.uci.edu, 1
 http://mhcid.ics.uci.edu, 3
 http://mondego.ics.uci.edu, 14
 http://motifmap-rna.ics.uci.edu, 2
 http://motifmap.ics.uci.edu, 2
-http://ngs.ics.uci.edu, 11
+http://ngs.ics.uci.edu, 7
 http://omni.ics.uci.edu, 1
 http://plrg.ics.uci.edu, 16
 http://psearch.ics.uci.edu, 1
@@ -127,36 +125,34 @@ http://riscit.ics.uci.edu, 3
 http://scale.ics.uci.edu, 7
 http://sconce.ics.uci.edu, 1
 http://sdcl.ics.uci.edu, 149
-http://se.ics.uci.edu, 1
+http://se.ics.uci.edu, 3
 http://seal.ics.uci.edu, 5
+http://seraja.ics.uci.edu, 1
 http://sherlock.ics.uci.edu, 7
-http://sli.ics.uci.edu, 220
+http://sli.ics.uci.edu, 194
 http://sourcerer.ics.uci.edu, 2
-http://sprout.ics.uci.edu, 1
+http://sprout.ics.uci.edu, 2
 http://stairs.ics.uci.edu, 4
+http://student-council.ics.uci.edu, 1
 http://tastier.ics.uci.edu, 1
 http://testlab.ics.uci.edu, 5
 http://tippersweb.ics.uci.edu, 1
 http://tutors.ics.uci.edu, 1
 http://vision.ics.uci.edu, 220
-http://wics.ics.uci.edu, 7
+http://wics.ics.uci.edu, 8
 http://www-db.ics.uci.edu, 27
-http://www.graphics.ics.uci.edu, 1
-http://www.informatics.ics.uci.edu, 1
-http://www.isg.ics.uci.edu, 1
 http://xtune.ics.uci.edu, 6
 http://yarra.ics.uci.edu, 1
-https://Transformativeplay.ics.uci.edu, 1
 https://accessibility.ics.uci.edu, 6
 https://acoi.ics.uci.edu, 58
 https://aiclub.ics.uci.edu, 2
 https://archive-beta.ics.uci.edu, 2
-https://archive.ics.uci.edu, 65
+https://archive.ics.uci.edu, 55
 https://asterix.ics.uci.edu, 4
 https://asterixdb.ics.uci.edu, 1
 https://cbcl.ics.uci.edu, 12
-https://chenli.ics.uci.edu, 10
-https://cml.ics.uci.edu, 24
+https://chenli.ics.uci.edu, 11
+https://cml.ics.uci.edu, 71
 https://code.ics.uci.edu, 13
 https://containers.ics.uci.edu, 1
 https://coronavirustwittermap.ics.uci.edu, 1
@@ -165,32 +161,32 @@ https://create.ics.uci.edu, 7
 https://cwicsocal18.ics.uci.edu, 9
 https://cyberclub.ics.uci.edu, 14
 https://dgillen.ics.uci.edu, 23
-https://duttgroup.ics.uci.edu, 83
-https://emj.ics.uci.edu, 41
-https://emj.ics.uci.edu/wp-login.php?redirect_to=https%3A%2F%2Femj.ics.uci.edu, 1
+https://duttgroup.ics.uci.edu, 80
+https://edgelab.ics.uci.edu, 7
+https://emj.ics.uci.edu, 40
+https://emj.ics.uci.edu/wp-login.php?redirect_to=https%3a%2f%2femj.ics.uci.edu, 1
 https://evoke.ics.uci.edu, 3
 https://fano.ics.uci.edu, 2
 https://futurehealth.ics.uci.edu, 1
 https://grafana-infra-blue.ics.uci.edu, 1
 https://grafana.ics.uci.edu, 1
-https://grape.ics.uci.edu, 644
-https://hack.ics.uci.edu, 2
-https://hai.ics.uci.edu, 7
+https://grape.ics.uci.edu, 645
+https://graphics.ics.uci.edu, 2
+https://hack.ics.uci.edu, 1
+https://hai.ics.uci.edu, 6
 https://helpdesk.ics.uci.edu, 3
-https://hombao.ics.uci.edu, 1
 https://hpi.ics.uci.edu, 3
 https://hub.ics.uci.edu, 3
-https://iasl.ics.uci.edu, 2
+https://iasl.ics.uci.edu, 20
 https://industryshowcase.ics.uci.edu, 22
 https://informatics.mt-live.ics.uci.edu, 1
-https://intranet.ics.uci.edu, 1
 https://ipf.ics.uci.edu, 2
-https://isg.ics.uci.edu, 124
+https://isg.ics.uci.edu, 148
 https://jgarcia.ics.uci.edu, 12
 https://luci.ics.uci.edu, 3
-https://mailman.ics.uci.edu, 3
+https://mailman.ics.uci.edu, 4
 https://malek.ics.uci.edu, 1
-https://mcs.ics.uci.edu, 28
+https://mcs.ics.uci.edu, 29
 https://mdogucu.ics.uci.edu, 1
 https://mds.ics.uci.edu, 13
 https://mhcid.ics.uci.edu, 15
@@ -198,7 +194,7 @@ https://mse.ics.uci.edu, 2
 https://mswe.ics.uci.edu, 13
 https://mt-live.ics.uci.edu, 1
 https://nalini.ics.uci.edu, 7
-https://ngs.ics.uci.edu, 695
+https://ngs.ics.uci.edu, 708
 https://onboarding.ics.uci.edu, 1
 https://password.ics.uci.edu, 1
 https://pastebin.ics.uci.edu, 1
@@ -207,20 +203,20 @@ https://phpmyadmin.ics.uci.edu, 3
 https://prometheus-infra-blue.ics.uci.edu, 1
 https://redmiles.ics.uci.edu, 4
 https://rstudio-hub.ics.uci.edu, 1
+https://se.ics.uci.edu, 9
 https://seal.ics.uci.edu, 1
 https://sherlock.ics.uci.edu, 1
-https://sli.ics.uci.edu, 113
+https://sli.ics.uci.edu, 140
 https://speedtest.ics.uci.edu, 1
 https://statconsulting.ics.uci.edu, 5
-https://student-council.ics.uci.edu, 1
-https://studentcouncil.ics.uci.edu, 3
+https://studentcouncil.ics.uci.edu, 2
 https://students.ics.uci.edu, 1
 https://support.ics.uci.edu, 2
 https://swiki.ics.uci.edu, 51
 https://tad.ics.uci.edu, 3
-https://transformativeplay.ics.uci.edu, 34
+https://tippers.ics.uci.edu, 1
+https://transformativeplay.ics.uci.edu, 35
 https://ugradforms.ics.uci.edu, 1
 https://unite.ics.uci.edu, 10
-https://wics.ics.uci.edu, 317
+https://wics.ics.uci.edu, 321
 https://wiki.ics.uci.edu, 5
-https://www.graphics.ics.uci.edu, 2
