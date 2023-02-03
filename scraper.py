@@ -110,12 +110,13 @@ class Our_Scraper:
         for i in range(16):
             sum_weights = 0
             for token, binary in words_in_binary.items():
-                #print(token, binary, token_dict[token])
-                if binary[i] == 1:
+                # print(f'binary[i] = {binary[i]}')
+                if binary[i] == '1':
                     sum_weights += token_dict[token]
+                    # print(f'for token {token}, i = {i} and binary = {binary} so adding {token_dict[token]} new_sum_weights = {sum_weights}')
                 else:
                     sum_weights -= token_dict[token]
-
+                    # print(f'for token {token}, i = {i} and binary = {binary} so subtracting {token_dict[token]} to get new_sum_weights = {sum_weights}')
             # List vector formed by summing weights
             vector.append(sum_weights)
 
@@ -143,7 +144,7 @@ class Our_Scraper:
         # Multiply result with frequency of the token
         result *= frequency
         #Obtain unique binary hash value by modding the max words of a page. Remove first 2 to remove '0b'
-        return bin(result % 65536)[2:].zfill(16)
+        return str(bin(result % 65536)[2:].zfill(16))
     
 
     def update_max_page(self, word_count, url):
