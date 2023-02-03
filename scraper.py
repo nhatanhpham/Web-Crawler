@@ -33,25 +33,17 @@ class Our_Scraper:
         self.subdomain_good = re.compile(r".+//.+\.ics\.uci\.edu")
         self.subdomain_ignore = re.compile(r".+//www\.ics\.uci\.edu")
 
-        # This is a regular expression to check if a url contains a date to check for calendar traps
-        self.calendar_pattern = re.compile(r"(\d{4}-\d{2}-\d{2})|(\d{2}-\d{2}-\d{4})")
-
-        # This stores the number of consecutive calendar links found
-        self.calendar_count = 0
-
 
     def scraper(self, url, resp):
 
         # We found another unique page, even if we don't crawl it
         self.data["Pages"] += 1
 
-        self.check_subdomain(url)
+        self.check_subdomain(resp.url)
 
-        if self.detect_calendar_trap(url):
-            return []
 
         # We also do this checking in the extract_next_links function, I think one of them should not duplicate this
-        if (resp and resp.status == 200 and resp.raw_response and resp.raw_response.content):
+        if (resp and resp.status == 200 and resp.raw_response and resp.raw_response.content and sys.getsizeof(resp.raw_response.content) <= 500000):
             soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
             
             #Get textual information
@@ -225,16 +217,6 @@ class Our_Scraper:
             subdomains[match.group(0)] += 1
             self.data["Subdomains"] = subdomains
 
-    def detect_calendar_trap(self, url):
-        if self.calendar_pattern.match(url):
-            self.calendar_count += 1
-        else:
-            self.calendar_count = 0
-        
-        if self.calendar_count > 2:
-            return True
-        return False
-
     # This gathers all of the data and prints out the report to the file named "Report.txt"
     def make_report(self):
         std_stdout = sys.stdout
@@ -293,7 +275,13 @@ def is_valid(url):
             return False
         if not re.match(r"(.+?\.)?(ics|cs|informatics|stat)\.uci\.edu", parsed.netloc):
             return False
-        if re.match(r"^.*(calendar|uploads|files).*$", parsed.path.lower()):
+        if re.match(r"share|attachment|rev|action", parsed.query):
+            return False
+        if re.match(r"(\d{4}-\d{2}-\d{2})|(\d{2}-\d{2}-\d{4})|(\d{2}-\d{2}-\d{2})|(\d{4}-\d{2})|(\d{2}-\d{4})", url):
+            return False
+        if re.match(r"img", url):
+            return False
+        if re.match(r"^.*(calendar|uploads|files|attachment|wp-admin).*$", parsed.path.lower()):
             return False
         #TO-DO: the whole of swiki.ics.uci.edu is a trap
         return not re.match(
@@ -310,10 +298,6 @@ def is_valid(url):
         print ("TypeError for ", parsed)
         raise
 
-def check_if_relative(url):
-    return bool(re.match(r'^[.]*[\/].+$', url))
-
-#potential error if the directory url doesn't end in / but there's a relative link that starsts with ../
 def change_url_to_absolute(url, resp):
     absolute_url = urldefrag(urljoin(resp.raw_response.url, url)).url
     return absolute_url
