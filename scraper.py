@@ -26,6 +26,10 @@ class Our_Scraper:
             self.data["Pages"] = 0
             self.data["Max"] = {"Words": 0, "Page_Name": ''}
             self.data["Subdomains"] = defaultdict(int)
+            self.data["Content_FP"] = dict()
+            self.data["Query_FP"] = dict()
+            self.data["Trap_Domains"] = defaultdict(int)
+            self.data["Blacklist"] = set()
             self.data.sync()     
 
         # Instead of using nltk stopwords, we used the exact stopwords given in the assignment
@@ -54,8 +58,9 @@ class Our_Scraper:
             if self.high_textual_information(text, hyperlinks):
                 word_count = self.tokenize_page(text)
 
-                # If this page is similar in content, or the url is similar to another page, do not crawl it
-                if self.split_url(url) or self.simhash():
+                # If this page is exact or similar in content to another, do not crawl it
+                # If the similar pages have the same domain and similar url queries, blacklist the domain
+                if self.simhash(url):
                     return []
 
                 self.update_max_page(word_count, resp.url)
@@ -68,8 +73,13 @@ class Our_Scraper:
         return []
     
     def split_url(self, url):
-        domain_query = re.compile(r"(?P<domain>.*\/[a-zA-Z0-9(^\/)]*)(?P<query>[^\/]*)")
+        domain_query = re.compile(r"(?P<domain>.*\.edu.*\/)(?P<query>[^\/]*)")
         matches = domain_query.match(url)
+        if matches:
+            return matches.group('domain'), matches.group('query')
+        else:
+            return url, ""
+
         if matches.group('domain') in self.domains:
             if matches.group('query'):
                 return self.simhash_query(matches.group('query'))
@@ -115,7 +125,7 @@ class Our_Scraper:
        
         return word_count     
 
-    def simhash_query(self, query):
+    def get_simhash_query(self, query):
         # Keep track of the tokens on only the current page
         self.current_query_tokens = defaultdict(int)
         # Dictionary containing query tokens as keys and their binary values
@@ -150,6 +160,8 @@ class Our_Scraper:
             else:
                 fingerprint_str += "0"
 
+        return fingerprint_str
+
         if self.detect_similar_query(fingerprint_str):
             print("IS SIMILAR")
             return True
@@ -172,12 +184,12 @@ class Our_Scraper:
         #hash_function.update(token.encode('utf-8'))
             
         # This will get the int value of the string, within the valid representation of 32 bits
-        hash_result = int(hash_function.hexdigest(), 16) % 4294967296
+        hash_result = int(hash_function.hexdigest(), 16) % 18446744073709551616
 
-        # Returns the unique 32 bit binary representation of the word
-        return str(bin(hash_result)[2:].zfill(32))
+        # Returns the unique 364 bit binary representation of the word
+        return str(bin(hash_result)[2:].zfill(64))
     
-    def simhash(self):
+    def simhash(self, url):
         words_in_binary = defaultdict(int)
         token_vector = []
         fingerprint_str = ""
@@ -186,7 +198,7 @@ class Our_Scraper:
             # Dictionary of tokens containing 32 bit binary representations
             words_in_binary[token] = self.get_token_binary(token) 
 
-        for i in range(32):
+        for i in range(64):
             sum_weights = 0
             for token, binary in words_in_binary.items():
                 if binary[i] == '1':
@@ -205,21 +217,35 @@ class Our_Scraper:
             else:
                 fingerprint_str += "0"
 
-        if self.detect_similar(fingerprint_str):
+        if self.detect_similar(fingerprint_str, url):
             return True
 
-        self.fingerprint.add(fingerprint_str)
         return False
     
-    def detect_similar_query(self, fingerprint):
-        for fp in self.fingerprint_queries:
-            if (fingerprint == fp):
-                # check if fingerprints are exact matches before computing similarity
-                return True
-            elif self.get_query_similarity(fingerprint, fp) > 0.75:
-                # if not, check if they are similar
-                return True
+    def detect_similar_query(self, domain, fp_1, fp_2, query_1, query_2):
+        temp_query_fp = self.data["Query_FP"]
+
+        if fp_1 not in temp_query_fp:
+            query_1_hash = self.get_simhash_query(query_1)
+            temp_query_fp[fp_1] = query_1_hash
+        else:
+            query_1_hash = temp_query_fp[fp_1]
+
+        query_2_hash = self.get_simhash_query(query_2)
+
+        temp_query_fp[fp_2] = query_2_hash
+        self.data["Query_FP"] = temp_query_fp
+
+        if self.get_query_similarity(query_1_hash, query_2_hash) >= 0.75:
+            temp_trap_domains = self.data["Trap_Domains"]
+            temp_trap_domains[domain] += 1
+            self.data["Trap_Domains"] = temp_trap_domains
+
+            if temp_trap_domains[domain] > 10:
+                self.update_blacklist(domain)
             
+            return True
+        
         return False
 
     def get_query_similarity(self, fp_1, fp_2):
@@ -231,25 +257,39 @@ class Our_Scraper:
 
         return similar_bits / 8.0
 
-    def detect_similar(self, fingerprint):
-        for fp in self.fingerprint:
-            if (fingerprint == fp):
-                # check if fingerprints are exact matches before computing similarity
+    def detect_similar(self, fp_2, url):
+        if fp_2 in self.data["Content_FP"]:
+            return True
+
+        temp_content_fp = self.data["Content_FP"]
+        domain_2, query_2 = self.split_url(url)
+        temp_content_fp[fp_2] = (domain_2, query_2)
+
+        for fp_1 in self.data["Content_FP"]:
+            if self.get_similarity(fp_1, fp_2) > 0.9:
+                domain_1, query_1 = temp_content_fp[fp_1]
+
+                if domain_1 == domain_2 and query_1 and query_2:
+                    if self.detect_similar_query(domain_1, fp_1, fp_2, query_1, query_2):
+                        self.data["Content_FP"] = temp_content_fp
+                        return True
+
+        for fp_1 in self.data["Content_FP"]:
+            if self.get_similarity(fp_1, fp_2) > 0.9:
+                self.data["Content_FP"] = temp_content_fp
                 return True
-            elif self.get_similarity(fingerprint, fp) > 0.9:
-                # if not, check if they are similar
-                return True
-            
+        
+        self.data["Content_FP"] = temp_content_fp
         return False
 
     def get_similarity(self, fp_1, fp_2):
         similar_bits = 0
 
-        for i in range(32):
+        for i in range(64):
             if fp_1[i] == fp_2[i]:
                 similar_bits += 1
     
-        return similar_bits / 32.0
+        return similar_bits / 64.0
     
     def update_max_page(self, word_count, url):
         if word_count > self.data["Max"]["Words"]:
@@ -257,6 +297,12 @@ class Our_Scraper:
             max_page["Words"] = word_count
             max_page["Page_Name"] = url
             self.data["Max"] = max_page
+
+    def update_blacklist(self, domain):
+        temp_blacklist = self.data["Blacklist"]
+        temp_blacklist.add(domain)
+        self.data["Blacklist"] = temp_blacklist
+
 
     @staticmethod 
     def generate_stop_words():
@@ -302,6 +348,8 @@ class Our_Scraper:
 
             for subdomain, freq in sorted(self.data['Subdomains'].items(), key = (lambda item : (item[0], -item[1]))):
                 print(f"{subdomain}, {freq}")
+
+            print(f"\nBLACKLIST: {self.data['Blacklist']}")
 
         sys.stdout = std_stdout
 
