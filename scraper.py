@@ -35,7 +35,6 @@ class Our_Scraper:
         self.subdomain_good = re.compile(r".+//.+\.ics\.uci\.edu")
         self.subdomain_ignore = re.compile(r".+//www\.ics\.uci\.edu")
 
-
     def scraper(self, url, resp):
 
         # We found another unique page, even if we don't crawl it
@@ -56,7 +55,7 @@ class Our_Scraper:
                 word_count = self.tokenize_page(text)
 
                 # If this page is similar in content, or the url is similar to another page, do not crawl it
-                if self.split_url(url) and self.simhash():
+                if self.split_url(url) or self.simhash():
                     return []
 
                 self.update_max_page(word_count, resp.url)
@@ -69,12 +68,10 @@ class Our_Scraper:
         return []
     
     def split_url(self, url):
-        domain_query = re.compile(r"(?P<domain>[^?]+)(?P<query>\?.*)*")
+        domain_query = re.compile(r"(?P<domain>.*\/[a-zA-Z0-9(^\/)]*)(?P<query>[^\/]*)")
         matches = domain_query.match(url)
         if matches.group('domain') in self.domains:
-            print("check domain", matches.group('domain'))
             if matches.group('query'):
-                print("check query", matches.group('query'))
                 return self.simhash_query(matches.group('query'))
         else:
             self.domains.add(matches.group('domain'))
@@ -119,28 +116,56 @@ class Our_Scraper:
         return word_count     
 
     def simhash_query(self, query):
+        # Keep track of the tokens on only the current page
+        self.current_query_tokens = defaultdict(int)
+        # Dictionary containing query tokens as keys and their binary values
+        query_token_in_binary = defaultdict(int)
+        token_vector = []
         fingerprint_str = ""
 
-        # Get binary representation of the query
-        fingerprint_str = self.get_query_binary(query)
-        print(fingerprint_str)
+        # Tokenize query
+        query_tokens = re.findall(r'[a-zA-Z0-9]+', query)
+        for token in query_tokens:
+            if token not in self.current_query_tokens:
+                self.current_query_tokens[token] += 1
 
-        if self.detect_similar(fingerprint_str):
+        for token in query_tokens:
+            # Dictionary of tokens containing 8 bit binary representations
+            query_token_in_binary[token] = self.get_query_binary(token) 
+
+        for i in range(8):
+            sum_weights = 0
+            for token, binary in query_token_in_binary.items():
+                if binary[i] == '1':
+                    sum_weights += self.current_query_tokens[token]
+                else:
+                    sum_weights -= self.current_query_tokens[token]
+            # List vector formed by summing weights
+            token_vector.append(sum_weights)
+
+        # 8-bit fingerprint formed from vector list
+        for i in token_vector:
+            if i > 0:
+                fingerprint_str += "1"
+            else:
+                fingerprint_str += "0"
+
+        if self.detect_similar_query(fingerprint_str):
             print("IS SIMILAR")
             return True
 
         self.fingerprint_queries.add(fingerprint_str)
         return False
-    
-    def get_query_binary(self, query):
-        hash_function = hashlib.sha1(query.encode('utf-8'))
+
+    def get_query_binary(self, token):
+        hash_function = hashlib.sha1(token.encode('utf-8'))
         #hash_function.update(token.encode('utf-8'))
             
-        # This will get the int value of the url, within the valid representation of 32 bits
-        hash_result = int(hash_function.hexdigest(), 16) % 4294967296
+        # This will get the int value of the string, within the valid representation of 32 bits
+        hash_result = int(hash_function.hexdigest(), 16) % 256
 
         # Returns the unique 32 bit binary representation of the word
-        return str(bin(hash_result)[2:].zfill(32))
+        return str(bin(hash_result)[2:].zfill(8))
 
     def get_token_binary(self, token):
         hash_function = hashlib.sha1(token.encode('utf-8'))
@@ -186,25 +211,25 @@ class Our_Scraper:
         self.fingerprint.add(fingerprint_str)
         return False
     
-    def get_url_binary(self, url):
-        hash_function = hashlib.sha1(url.encode('utf-8'))
-        #hash_function.update(token.encode('utf-8'))
+    def detect_similar_query(self, fingerprint):
+        for fp in self.fingerprint_queries:
+            if (fingerprint == fp):
+                # check if fingerprints are exact matches before computing similarity
+                return True
+            elif self.get_query_similarity(fingerprint, fp) > 0.75:
+                # if not, check if they are similar
+                return True
             
-        # This will get the int value of the url, within the valid representation of 32 bits
-        hash_result = int(hash_function.hexdigest(), 16) % 4294967296
+        return False
 
-        # Returns the unique 32 bit binary representation of the word
-        return str(bin(hash_result)[2:].zfill(32))
+    def get_query_similarity(self, fp_1, fp_2):
+        similar_bits = 0
 
-    def get_token_binary(self, token):
-        hash_function = hashlib.sha1(token.encode('utf-8'))
-        #hash_function.update(token.encode('utf-8'))
-            
-        # This will get the int value of the string, within the valid representation of 32 bits
-        hash_result = int(hash_function.hexdigest(), 16) % 4294967296
+        for i in range(8):
+            if fp_1[i] == fp_2[i]:
+                similar_bits += 1
 
-        # Returns the unique 32 bit binary representation of the word
-        return str(bin(hash_result)[2:].zfill(32))
+        return similar_bits / 8.0
 
     def detect_similar(self, fingerprint):
         for fp in self.fingerprint:
@@ -226,7 +251,6 @@ class Our_Scraper:
     
         return similar_bits / 32.0
     
-
     def update_max_page(self, word_count, url):
         if word_count > self.data["Max"]["Words"]:
             max_page = self.data["Max"]
@@ -280,7 +304,6 @@ class Our_Scraper:
                 print(f"{subdomain}, {freq}")
 
         sys.stdout = std_stdout
-
 
 def extract_next_links(url, resp, links):
     # Implementation required.
