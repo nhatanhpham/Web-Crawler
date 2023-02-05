@@ -14,7 +14,7 @@ class Worker(Thread):
         self.frontier = frontier
 
         # Our_Scraper is a class for our scraper method
-        self.scraper = scraper.Our_Scraper(config, restart)
+        self.scraper = scraper.Our_Scraper(config, restart, self.frontier)
 
         # basic check for requests in scraper
         assert {getsource(scraper).find(req) for req in {"from requests import", "import requests"}} == {-1}, "Do not use requests in scraper.py"

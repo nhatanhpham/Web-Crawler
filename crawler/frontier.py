@@ -1,5 +1,6 @@
 import os
 import shelve
+import re
 
 from threading import Thread, RLock
 from queue import Queue, Empty
@@ -70,3 +71,10 @@ class Frontier(object):
 
         self.save[urlhash] = (url, True)
         self.save.sync()
+
+    def delete_domain(self, domain):
+        for urlhash in self.save:
+            if domain in self.save[urlhash][0]:
+                updated_tuple = (self.save[urlhash][0], True)
+                self.save[urlhash] = updated_tuple
+                self.save.sync()

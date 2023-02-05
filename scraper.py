@@ -10,8 +10,8 @@ import os
 import hashlib
 
 class Our_Scraper:
-    def __init__(self, config, restart):
-
+    def __init__(self, config, restart, frontier):
+        self.frontier = frontier
         # Set of 32 bit fingerprint values
         self.fingerprint = set()
         self.domains = set()
@@ -20,17 +20,17 @@ class Our_Scraper:
         # This either loads or deletes all of the previously stored data for the report
         if os.path.exists(config.data_file) and restart:
             os.remove(config.data_file)
-        self.data = shelve.open(config.data_file)
+        Our_Scraper.data = shelve.open(config.data_file)
         if restart:
-            self.data["Tokens"] = defaultdict(int)
-            self.data["Pages"] = 0
-            self.data["Max"] = {"Words": 0, "Page_Name": ''}
-            self.data["Subdomains"] = defaultdict(int)
-            self.data["Content_FP"] = dict()
-            self.data["Query_FP"] = dict()
-            self.data["Trap_Domains"] = defaultdict(int)
-            self.data["Blacklist"] = set()
-            self.data.sync()     
+            Our_Scraper.data["Tokens"] = defaultdict(int)
+            Our_Scraper.data["Pages"] = 0
+            Our_Scraper.data["Max"] = {"Words": 0, "Page_Name": ''}
+            Our_Scraper.data["Subdomains"] = defaultdict(int)
+            Our_Scraper.data["Content_FP"] = dict()
+            Our_Scraper.data["Query_FP"] = dict()
+            Our_Scraper.data["Trap_Domains"] = defaultdict(int)
+            Our_Scraper.data["Blacklist"] = set()
+            Our_Scraper.data.sync()     
 
         # Instead of using nltk stopwords, we used the exact stopwords given in the assignment
         self.stop_words = Our_Scraper.generate_stop_words()
@@ -42,7 +42,7 @@ class Our_Scraper:
     def scraper(self, url, resp):
 
         # We found another unique page, even if we don't crawl it
-        self.data["Pages"] += 1
+        Our_Scraper.data["Pages"] += 1
 
         self.check_subdomain(resp.url)
 
@@ -57,6 +57,12 @@ class Our_Scraper:
             #Crawl all pages with high textual information content > 400 characters excluding whitespace
             if self.high_textual_information(text, hyperlinks):
                 word_count = self.tokenize_page(text)
+                
+                soup_text = soup
+                for link in soup_text.findAll('a', href=True):
+                    link.extract()
+                only_text = soup_text.get_text()
+                self.tokenize_only_text(only_text)
 
                 # If this page is exact or similar in content to another, do not crawl it
                 # If the similar pages have the same domain and similar url queries, blacklist the domain
@@ -65,14 +71,17 @@ class Our_Scraper:
 
                 self.update_max_page(word_count, resp.url)
 
-                # Updates self.data shelve with all the new updates
-                self.data.sync()
+                # Updates Our_Scraper.data shelve with all the new updates
+                Our_Scraper.data.sync()
 
                 links = extract_next_links(url, resp, hyperlinks)
                 return links
         return []
     
     def split_url(self, url):
+        parsed = urlparse(url)
+        return parsed.netloc + parsed.path, parsed.query
+
         domain_query = re.compile(r"(?P<domain>.*\.edu.*\/)(?P<query>[^\/]*)")
         matches = domain_query.match(url)
         if matches:
@@ -101,16 +110,16 @@ class Our_Scraper:
     def tokenize_page(self, text):
         word_count = 0
 
-        # We need to extract the dictionary of tokens from self.data in order to add to it
-        token_dict = self.data["Tokens"]
+        # We need to extract the dictionary of tokens from Our_Scraper.data in order to add to it
+        token_dict = Our_Scraper.data["Tokens"]
         
         # Keep track of the tokens on only the current page
-        self.current_tokens = defaultdict(int)
+        # self.current_tokens = defaultdict(int)
 
         # Extract all the text from the page into an iterable
         for match in re.finditer(r"[a-zA-Z0-9']+", text):
             token = match.group()
-            # make sure work is just not a symbol before counting it and adding to self.data
+            # make sure work is just not a symbol before counting it and adding to Our_Scraper.data
             if (not re.match(r"^(\W|_)+$", token)):
                 # Keep track of how many words this page has, regardless of it is a stopword
                 word_count += 1
@@ -118,12 +127,35 @@ class Our_Scraper:
                 token = token.casefold()
                 if token not in self.stop_words:
                     token_dict[token] += 1
+                    #self.current_tokens[token] += 1
+        
+         # Store the modified dictionary of tokens back into Our_Scraper.data
+        Our_Scraper.data["Tokens"] = token_dict
+       
+        return word_count   
+
+    # This will only tokenize the text, excluding the text that are links
+    def tokenize_only_text(self, text):
+        # token_dict = Our_Scraper.data["Only_Text"]
+        
+        # Keep track of the tokens on only the current page
+        self.current_tokens = defaultdict(int)
+
+        # Extract all the text from the page into an iterable
+        for match in re.finditer(r"[a-zA-Z0-9']+", text):
+            token = match.group()
+            # make sure work is just not a symbol before counting it and adding to Our_Scraper.data
+            if (not re.match(r"^(\W|_)+$", token)):
+                # Keep track of how many words this page has, regardless of it is a stopword
+                
+
+                token = token.casefold()
+                if token not in self.stop_words:
                     self.current_tokens[token] += 1
         
-         # Store the modified dictionary of tokens back into self.data
-        self.data["Tokens"] = token_dict
-       
-        return word_count     
+    
+         # Store the modified dictionary of tokens back into Our_Scraper.data
+        
 
     def get_simhash_query(self, query):
         # Keep track of the tokens on only the current page
@@ -134,7 +166,7 @@ class Our_Scraper:
         fingerprint_str = ""
 
         # Tokenize query
-        query_tokens = re.findall(r'[a-zA-Z0-9]+', query)
+        query_tokens = re.findall(r'[a-zA-Z]+', query)
         for token in query_tokens:
             if token not in self.current_query_tokens:
                 self.current_query_tokens[token] += 1
@@ -186,7 +218,7 @@ class Our_Scraper:
         # This will get the int value of the string, within the valid representation of 32 bits
         hash_result = int(hash_function.hexdigest(), 16) % 18446744073709551616
 
-        # Returns the unique 364 bit binary representation of the word
+        # Returns the unique 64 bit binary representation of the word
         return str(bin(hash_result)[2:].zfill(64))
     
     def simhash(self, url):
@@ -217,37 +249,45 @@ class Our_Scraper:
             else:
                 fingerprint_str += "0"
 
+        # Return true if two urls have similar fingerprints within a certain threshold
         if self.detect_similar(fingerprint_str, url):
             return True
 
         return False
     
+    # This will only be called when two URL's have the same domain and similar content fingerprints
+    # If their URL queries also have similar fingerprints then add a trap count for that domain
+    # If a domain has over 5 trap counts, blacklist it
     def detect_similar_query(self, domain, fp_1, fp_2, query_1, query_2):
-        temp_query_fp = self.data["Query_FP"]
+        temp_query_fp = Our_Scraper.data["Query_FP"]
 
+        # Generate the query fingerprint for the first URL if not already stored
         if fp_1 not in temp_query_fp:
             query_1_hash = self.get_simhash_query(query_1)
             temp_query_fp[fp_1] = query_1_hash
         else:
             query_1_hash = temp_query_fp[fp_1]
 
+        # Generates the query fingerprint for the second URL
         query_2_hash = self.get_simhash_query(query_2)
-
         temp_query_fp[fp_2] = query_2_hash
-        self.data["Query_FP"] = temp_query_fp
+        Our_Scraper.data["Query_FP"] = temp_query_fp
 
+        # If the two query fingerprints are similar then update the trap count for that domain
         if self.get_query_similarity(query_1_hash, query_2_hash) >= 0.75:
-            temp_trap_domains = self.data["Trap_Domains"]
+            temp_trap_domains = Our_Scraper.data["Trap_Domains"]
             temp_trap_domains[domain] += 1
-            self.data["Trap_Domains"] = temp_trap_domains
+            Our_Scraper.data["Trap_Domains"] = temp_trap_domains
 
-            if temp_trap_domains[domain] > 10:
+            # Blacklist that domain if there is more than 5 trap count
+            if temp_trap_domains[domain] > 5:
                 self.update_blacklist(domain)
             
             return True
         
         return False
 
+    # Returns the similarity between two URL query fingerprints
     def get_query_similarity(self, fp_1, fp_2):
         similar_bits = 0
 
@@ -257,31 +297,38 @@ class Our_Scraper:
 
         return similar_bits / 8.0
 
+    # Detects if the given URL has a similar content fingerprint to any other fingerprints
     def detect_similar(self, fp_2, url):
-        if fp_2 in self.data["Content_FP"]:
+        # If there is an exact match nothing else needs to be checked
+        if fp_2 in Our_Scraper.data["Content_FP"]:
             return True
 
-        temp_content_fp = self.data["Content_FP"]
+        # Extracts the domain and query of the given url
+        temp_content_fp = Our_Scraper.data["Content_FP"]
         domain_2, query_2 = self.split_url(url)
         temp_content_fp[fp_2] = (domain_2, query_2)
 
-        for fp_1 in self.data["Content_FP"]:
+        # First determines if there are similar content fingerprints that have the same domains
+        for fp_1 in Our_Scraper.data["Content_FP"]:
             if self.get_similarity(fp_1, fp_2) > 0.9:
                 domain_1, query_1 = temp_content_fp[fp_1]
 
+                # If they have the same domain then compare their query fingerprints
                 if domain_1 == domain_2 and query_1 and query_2:
                     if self.detect_similar_query(domain_1, fp_1, fp_2, query_1, query_2):
-                        self.data["Content_FP"] = temp_content_fp
+                        Our_Scraper.data["Content_FP"] = temp_content_fp
                         return True
 
-        for fp_1 in self.data["Content_FP"]:
+        # Next determines if there are similar content fingerprints regardless of their domains
+        for fp_1 in Our_Scraper.data["Content_FP"]:
             if self.get_similarity(fp_1, fp_2) > 0.9:
-                self.data["Content_FP"] = temp_content_fp
+                Our_Scraper.data["Content_FP"] = temp_content_fp
                 return True
         
-        self.data["Content_FP"] = temp_content_fp
+        Our_Scraper.data["Content_FP"] = temp_content_fp
         return False
 
+    # Returns the similarity between two URL content fingerprints
     def get_similarity(self, fp_1, fp_2):
         similar_bits = 0
 
@@ -291,19 +338,24 @@ class Our_Scraper:
     
         return similar_bits / 64.0
     
+    # Updates the maximum page word count and its corresponding URL
     def update_max_page(self, word_count, url):
-        if word_count > self.data["Max"]["Words"]:
-            max_page = self.data["Max"]
+        if word_count > Our_Scraper.data["Max"]["Words"]:
+            max_page = Our_Scraper.data["Max"]
             max_page["Words"] = word_count
             max_page["Page_Name"] = url
-            self.data["Max"] = max_page
+            Our_Scraper.data["Max"] = max_page
 
+    # Adds the domain to the set of blacklisted domains
     def update_blacklist(self, domain):
-        temp_blacklist = self.data["Blacklist"]
-        temp_blacklist.add(domain)
-        self.data["Blacklist"] = temp_blacklist
+        if domain not in Our_Scraper.data["Blacklist"]:
+            temp_blacklist = Our_Scraper.data["Blacklist"]
+            temp_blacklist.add(domain)
+            Our_Scraper.data["Blacklist"] = temp_blacklist
 
+            self.frontier.delete_domain(domain)
 
+    # Stores all of the English stop words
     @staticmethod 
     def generate_stop_words():
         input_path = "Stop_Words.txt"
@@ -323,33 +375,33 @@ class Our_Scraper:
         match = self.subdomain_good.match(url)
 
         if match and not self.subdomain_ignore.match(url):
-            subdomains = self.data["Subdomains"]
+            subdomains = Our_Scraper.data["Subdomains"]
             subdomains[match.group(0).casefold().replace('www.','')] += 1
-            self.data["Subdomains"] = subdomains
+            Our_Scraper.data["Subdomains"] = subdomains
 
     # This gathers all of the data and prints out the report to the file named "Report.txt"
     def make_report(self):
         std_stdout = sys.stdout
         with open("Report.txt", 'w') as report:
             sys.stdout = report
-            print(f"1. We found {self.data['Pages']} unique pages\n")
-            print(f"2. The longest page in terms of the number of words is {self.data['Max']['Page_Name']}\n")
+            print(f"1. We found {Our_Scraper.data['Pages']} unique pages\n")
+            print(f"2. The longest page in terms of the number of words is {Our_Scraper.data['Max']['Page_Name']}\n")
 
             print("3. The 50 most common words in the entire set of pages crawled under these domains are:")
             counter = 50
-            for word, _ in sorted(self.data['Tokens'].items(), key = (lambda item : (-item[1], item[0]))):
+            for word, _ in sorted(Our_Scraper.data['Tokens'].items(), key = (lambda item : (-item[1], item[0]))):
                 if counter <= 0:
                     break
                 if len(word) > 1:
                     print(word)
                     counter -= 1
             
-            print(f"\n4. We found {len(self.data['Subdomains'])} subdomains in the ics.uci.edu domain.\n")
+            print(f"\n4. We found {len(Our_Scraper.data['Subdomains'])} subdomains in the ics.uci.edu domain.\n")
 
-            for subdomain, freq in sorted(self.data['Subdomains'].items(), key = (lambda item : (item[0], -item[1]))):
+            for subdomain, freq in sorted(Our_Scraper.data['Subdomains'].items(), key = (lambda item : (item[0], -item[1]))):
                 print(f"{subdomain}, {freq}")
 
-            print(f"\nBLACKLIST: {self.data['Blacklist']}")
+            print(f"\nBLACKLIST: {Our_Scraper.data['Blacklist']}")
 
         sys.stdout = std_stdout
 
@@ -387,8 +439,11 @@ def is_valid(url):
         if not re.match(r"(.+?\.)?(ics|cs|informatics|stat)\.uci\.edu", parsed.netloc):
             return False
         #avoids queries that involve actions
-        if re.match(r"share|attachment|rev|action|do", parsed.query):
-            return False
+        #if re.match(r"share|attachment|rev|action|do", parsed.query):
+        #    return False
+        for domain in Our_Scraper.data["Blacklist"]:
+            if re.match(domain, url):
+                return False
         #avoids calendar traps
         if re.match(r"(\d{4}-\d{2}-\d{2})|(\d{2}-\d{2}-\d{4})|(\d{2}-\d{2}-\d{2})|(\d{4}-\d{2})|(\d{2}-\d{4})", url):
             return False
