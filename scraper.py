@@ -315,7 +315,7 @@ class Our_Scraper:
         for fp_1 in Our_Scraper.data["Content_FP"]:
             similarity = self.get_similarity(fp_1, fp_2)
             
-            if similarity >= 0.75:
+            if similarity >= 0.5:
                 if similarity > .9:
                     very_similar = True
                 
