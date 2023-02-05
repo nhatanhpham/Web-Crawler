@@ -1,0 +1,233 @@
+1. We found 17073 unique pages
+
+2. The longest page in terms of the number of words is http://www.ics.uci.edu/~cs224
+
+3. The 50 most common words in the entire set of pages crawled under these domains are:
+ics
+uci
+will
+research
+2021
+data
+computer
+10
+2022
+can
+information
+edu
+students
+software
+project
+course
+one
+http
+2020
+science
+may
+student
+pdf
+time
+news
+2017
+11
+2018
+years
+school
+new
+12
+use
+www
+class
+2016
+policies
+bren
+projects
+design
+support
+work
+also
+graduate
+first
+added
+engineering
+using
+ago
+systems
+
+4. We found 173 subdomains in the ics.uci.edu domain.
+
+http://alumni.ics.uci.edu, 5
+http://ambassadors.ics.uci.edu, 1
+http://archive.ics.uci.edu, 5
+http://asterix.ics.uci.edu, 11
+http://asterixdb.ics.uci.edu, 2
+http://awareness.ics.uci.edu, 1
+http://caesar.ics.uci.edu, 1
+http://cbcl.ics.uci.edu, 8
+http://cert.ics.uci.edu, 29
+http://cgvw.ics.uci.edu, 1
+http://checkmate.ics.uci.edu, 1
+http://cherry.ics.uci.edu, 1
+http://chime.ics.uci.edu, 1
+http://cloudberry.ics.uci.edu, 2
+http://cml.ics.uci.edu, 4
+http://cocoa-krispies.ics.uci.edu, 1
+http://code.ics.uci.edu, 1
+http://codeexchange.ics.uci.edu, 1
+http://computableplant.ics.uci.edu, 67
+http://cradl.ics.uci.edu, 15
+http://cwicsocal18.ics.uci.edu, 1
+http://dataguard.ics.uci.edu, 1
+http://datalab.ics.uci.edu, 1
+http://dataprotector.ics.uci.edu, 1
+http://dblp.ics.uci.edu, 2
+http://dejavu.ics.uci.edu, 1
+http://djp3-pc2.ics.uci.edu, 1
+http://duke.ics.uci.edu, 1
+http://duttgroup.ics.uci.edu, 1
+http://dynamo.ics.uci.edu, 9
+http://elms.ics.uci.edu, 1
+http://emj-pc.ics.uci.edu, 1
+http://esl.ics.uci.edu, 7
+http://evoke.ics.uci.edu, 3
+http://fano.ics.uci.edu, 32
+http://flamingo.ics.uci.edu, 45
+http://fr.ics.uci.edu, 9
+http://frost.ics.uci.edu, 1
+http://futurehealth.ics.uci.edu, 4
+http://graphics.ics.uci.edu, 10
+http://graphmod.ics.uci.edu, 1
+http://hai.ics.uci.edu, 1
+http://hana.ics.uci.edu, 4
+http://hobbes.ics.uci.edu, 11
+http://hombao.ics.uci.edu, 2
+http://honors.ics.uci.edu, 2
+http://i-sensorium.ics.uci.edu, 6
+http://ieee.ics.uci.edu, 1
+http://informatics.ics.uci.edu, 3
+http://ipubmed.ics.uci.edu, 1
+http://isg.ics.uci.edu, 2
+http://jujube.ics.uci.edu, 2
+http://kdd.ics.uci.edu, 2
+http://keys.ics.uci.edu, 1
+http://kgcs.ics.uci.edu, 1
+http://lolth.ics.uci.edu, 1
+http://luci.ics.uci.edu, 2
+http://malek.ics.uci.edu, 1
+http://map125.ics.uci.edu, 1
+http://mapgrid.ics.uci.edu, 2
+http://mcs.ics.uci.edu, 2
+http://metaviz.ics.uci.edu, 1
+http://mhcid.ics.uci.edu, 3
+http://mondego.ics.uci.edu, 16
+http://motifmap-rna.ics.uci.edu, 2
+http://motifmap.ics.uci.edu, 2
+http://ngs.ics.uci.edu, 17
+http://omni.ics.uci.edu, 1
+http://perennialpolycultures.ics.uci.edu, 1
+http://plrg.ics.uci.edu, 16
+http://psearch.ics.uci.edu, 1
+http://radicle.ics.uci.edu, 6
+http://riscit.ics.uci.edu, 3
+http://scale.ics.uci.edu, 7
+http://sconce.ics.uci.edu, 1
+http://sdcl.ics.uci.edu, 206
+http://se.ics.uci.edu, 3
+http://seal.ics.uci.edu, 5
+http://seraja.ics.uci.edu, 2
+http://sherlock.ics.uci.edu, 7
+http://sli.ics.uci.edu, 1062
+http://sourcerer.ics.uci.edu, 2
+http://sprout.ics.uci.edu, 2
+http://stairs.ics.uci.edu, 4
+http://student-council.ics.uci.edu, 1
+http://tastier.ics.uci.edu, 1
+http://testlab.ics.uci.edu, 5
+http://tippersweb.ics.uci.edu, 1
+http://tutors.ics.uci.edu, 1
+http://vision.ics.uci.edu, 218
+http://wics.ics.uci.edu, 12
+http://www-db.ics.uci.edu, 29
+http://xtune.ics.uci.edu, 6
+http://yarra.ics.uci.edu, 1
+https://accessibility.ics.uci.edu, 6
+https://acoi.ics.uci.edu, 58
+https://aiclub.ics.uci.edu, 2
+https://archive-beta.ics.uci.edu, 2
+https://archive.ics.uci.edu, 72
+https://asterix.ics.uci.edu, 4
+https://asterixdb.ics.uci.edu, 1
+https://cbcl.ics.uci.edu, 318
+https://chenli.ics.uci.edu, 10
+https://cml.ics.uci.edu, 190
+https://code.ics.uci.edu, 12
+https://containers.ics.uci.edu, 1
+https://coronavirustwittermap.ics.uci.edu, 1
+https://cradl.ics.uci.edu, 21
+https://create.ics.uci.edu, 7
+https://cwicsocal18.ics.uci.edu, 9
+https://cyberclub.ics.uci.edu, 14
+https://dgillen.ics.uci.edu, 23
+https://duttgroup.ics.uci.edu, 75
+https://edgelab.ics.uci.edu, 7
+https://emj.ics.uci.edu, 41
+https://evoke.ics.uci.edu, 4
+https://fano.ics.uci.edu, 2
+https://flamingo.ics.uci.edu, 1
+https://futurehealth.ics.uci.edu, 1
+https://grafana-infra-blue.ics.uci.edu, 1
+https://grafana.ics.uci.edu, 1
+https://grape.ics.uci.edu, 1622
+https://graphics.ics.uci.edu, 2
+https://hack.ics.uci.edu, 2
+https://hai.ics.uci.edu, 6
+https://helpdesk.ics.uci.edu, 3
+https://hpi.ics.uci.edu, 3
+https://hub.ics.uci.edu, 3
+https://iasl.ics.uci.edu, 21
+https://industryshowcase.ics.uci.edu, 14
+https://informatics.mt-live.ics.uci.edu, 1
+https://intranet.ics.uci.edu, 1
+https://ipf.ics.uci.edu, 2
+https://isg.ics.uci.edu, 177
+https://jgarcia.ics.uci.edu, 12
+https://luci.ics.uci.edu, 3
+https://mailman.ics.uci.edu, 4
+https://mcs.ics.uci.edu, 28
+https://mdogucu.ics.uci.edu, 1
+https://mds.ics.uci.edu, 13
+https://mhcid.ics.uci.edu, 15
+https://mse.ics.uci.edu, 2
+https://mswe.ics.uci.edu, 13
+https://mt-live.ics.uci.edu, 1
+https://nalini.ics.uci.edu, 7
+https://ngs.ics.uci.edu, 1408
+https://onboarding.ics.uci.edu, 1
+https://password.ics.uci.edu, 1
+https://pastebin.ics.uci.edu, 1
+https://pgadmin.ics.uci.edu, 1
+https://phpmyadmin.ics.uci.edu, 3
+https://prometheus-infra-blue.ics.uci.edu, 1
+https://redmiles.ics.uci.edu, 4
+https://rstudio-hub.ics.uci.edu, 2
+https://se.ics.uci.edu, 9
+https://seal.ics.uci.edu, 1
+https://sherlock.ics.uci.edu, 1
+https://sli.ics.uci.edu, 148
+https://speedtest.ics.uci.edu, 1
+https://statconsulting.ics.uci.edu, 5
+https://student-council.ics.uci.edu, 1
+https://studentcouncil.ics.uci.edu, 31
+https://students.ics.uci.edu, 1
+https://support.ics.uci.edu, 3
+https://swiki.ics.uci.edu, 641
+https://tad.ics.uci.edu, 3
+https://tippers.ics.uci.edu, 1
+https://tippersweb.ics.uci.edu, 1
+https://transformativeplay.ics.uci.edu, 35
+https://ugradforms.ics.uci.edu, 1
+https://unite.ics.uci.edu, 10
+https://wics.ics.uci.edu, 994
+https://wiki.ics.uci.edu, 40
+
+BLACKLIST: {'swiki.ics.uci.edu/doku.php/projects:maint-fall-2020', 'swiki.ics.uci.edu/doku.php/services:datacenter:cs', 'www.ics.uci.edu/faculty/index.php', 'www.ics.uci.edu/community/news/view_news.php', 'cbcl.ics.uci.edu/doku.php/teaching/cs285s14/start', 'cbcl.ics.uci.edu/doku.php/software', 'cbcl.ics.uci.edu/doku.php/people', 'swiki.ics.uci.edu/doku.php/projects:maint-winter-2021', 'swiki.ics.uci.edu/doku.php/projects:maint-spring-2021', 'swiki.ics.uci.edu/doku.php/projects:maint-2021', 'www.ics.uci.edu/community/news/view_news', 'swiki.ics.uci.edu/doku.php/start', 'swiki.ics.uci.edu/doku.php/virtual_environments:jupyterhub', 'wiki.ics.uci.edu/doku.php/accounts:vmware', 'cbcl.ics.uci.edu/doku.php/publications', 'swiki.ics.uci.edu/doku.php/announce:announce-2022', 'grape.ics.uci.edu/wiki/public/wiki/cs222p-2017-fall', 'grape.ics.uci.edu/wiki/asterix/wiki/stats170ab-2018', 'swiki.ics.uci.edu/doku.php/projects:maint-2022', 'swiki.ics.uci.edu/doku.php/announce:announce-2021', 'cbcl.ics.uci.edu/doku.php/data', 'cbcl.ics.uci.edu/doku.php/teaching/cs295w11/start', 'swiki.ics.uci.edu/doku.php/announce:fall-2020', 'swiki.ics.uci.edu/doku.php/accounts:account_activation'}

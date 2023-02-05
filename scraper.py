@@ -308,25 +308,26 @@ class Our_Scraper:
         domain_2, query_2 = self.split_url(url)
         temp_content_fp[fp_2] = (domain_2, query_2)
 
-        # First determines if there are similar content fingerprints that have the same domains
-        for fp_1 in Our_Scraper.data["Content_FP"]:
-            if self.get_similarity(fp_1, fp_2) > 0.9:
-                domain_1, query_1 = temp_content_fp[fp_1]
+        # Indicates if there are similar content fingerprints regardless of their domains
+        very_similar = False
 
+        # Determines if there are similar content fingerprints that have the same domains
+        for fp_1 in Our_Scraper.data["Content_FP"]:
+            similarity = self.get_similarity(fp_1, fp_2)
+            
+            if similarity >= 0.75:
+                if similarity > .9:
+                    very_similar = True
+                
+                domain_1, query_1 = temp_content_fp[fp_1]
                 # If they have the same domain then compare their query fingerprints
                 if domain_1 == domain_2 and query_1 and query_2:
                     if self.detect_similar_query(domain_1, fp_1, fp_2, query_1, query_2):
                         Our_Scraper.data["Content_FP"] = temp_content_fp
                         return True
-
-        # Next determines if there are similar content fingerprints regardless of their domains
-        for fp_1 in Our_Scraper.data["Content_FP"]:
-            if self.get_similarity(fp_1, fp_2) > 0.9:
-                Our_Scraper.data["Content_FP"] = temp_content_fp
-                return True
         
         Our_Scraper.data["Content_FP"] = temp_content_fp
-        return False
+        return very_similar
 
     # Returns the similarity between two URL content fingerprints
     def get_similarity(self, fp_1, fp_2):
