@@ -78,3 +78,5 @@ class Frontier(object):
                 updated_tuple = (self.save[urlhash][0], True)
                 self.save[urlhash] = updated_tuple
                 self.save.sync()
+                if (self.save[urlhash][0] in self.to_be_downloaded):
+                    self.to_be_downloaded.remove(self.save[urlhash][0])
