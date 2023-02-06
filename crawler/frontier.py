@@ -73,10 +73,10 @@ class Frontier(object):
         self.save.sync()
 
     def delete_domain(self, domain):
-        for urlhash in self.save:
-            if domain in self.save[urlhash][0]:
-                updated_tuple = (self.save[urlhash][0], True)
-                self.save[urlhash] = updated_tuple
-                self.save.sync()
-                if (self.save[urlhash][0] in self.to_be_downloaded):
-                    self.to_be_downloaded.remove(self.save[urlhash][0])
+        urls_to_remove = set()
+        for url in self.to_be_downloaded:
+            if domain in url:
+                urls_to_remove.add(url)
+        for remove_url in urls_to_remove:
+            self.to_be_downloaded.remove(remove_url)
+            self.mark_url_complete(remove_url)

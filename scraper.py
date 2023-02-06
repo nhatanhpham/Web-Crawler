@@ -40,14 +40,20 @@ class Our_Scraper:
         self.subdomain_ignore = re.compile(r".+//www\.ics\.uci\.edu")
 
     def scraper(self, url, resp):
+        # url: the URL that was used to get the page
+        # resp.url: the actual url of the page
+        # resp.status: the status code returned by the server. 200 is OK, you got the page. Other numbers mean that there was some kind of problem.
+        # resp.error: when status is not 200, you can check the error here, if needed.
+        # resp.raw_response: this is where the page actually is. More specifically, the raw_response has two parts:
+        # resp.raw_response.url: the url, again
+        # resp.raw_response.content: the content of the page!
 
-        # We found another unique page, even if we don't crawl it
-        Our_Scraper.data["Pages"] += 1
 
-        self.check_subdomain(resp.url)
-
-        # We also do this checking in the extract_next_links function, I think one of them should not duplicate this
         if (resp and resp.status == 200 and resp.raw_response and resp.raw_response.content and sys.getsizeof(resp.raw_response.content) <= 500000):
+            # We found another unique page, even if we don't crawl it
+            Our_Scraper.data["Pages"] += 1
+
+            self.check_subdomain(resp.url)
             soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
             
             #Get textual information
@@ -66,7 +72,7 @@ class Our_Scraper:
 
                 # If this page is exact or similar in content to another, do not crawl it
                 # If the similar pages have the same domain and similar url queries, blacklist the domain
-                if self.simhash(url):
+                if self.simhash(resp.url):
                     return []
 
                 self.update_max_page(word_count, resp.url)
@@ -74,7 +80,7 @@ class Our_Scraper:
                 # Updates Our_Scraper.data shelve with all the new updates
                 Our_Scraper.data.sync()
 
-                links = extract_next_links(url, resp, hyperlinks)
+                links = extract_next_links(resp, hyperlinks)
                 return links
         return []
     
@@ -280,7 +286,7 @@ class Our_Scraper:
             Our_Scraper.data["Trap_Domains"] = temp_trap_domains
 
             # Blacklist that domain if there is more than 5 trap count
-            if temp_trap_domains[domain] > 5:
+            if temp_trap_domains[domain] >= 3:
                 self.update_blacklist(domain)
             
             return True
@@ -315,7 +321,7 @@ class Our_Scraper:
         for fp_1 in Our_Scraper.data["Content_FP"]:
             similarity = self.get_similarity(fp_1, fp_2)
             
-            if similarity >= 0.5:
+            if similarity >= 0.75:
                 if similarity > .9:
                     very_similar = True
                 
@@ -406,15 +412,8 @@ class Our_Scraper:
 
         sys.stdout = std_stdout
 
-def extract_next_links(url, resp, links):
+def extract_next_links(resp, links):
     # Implementation required.
-    # url: the URL that was used to get the page
-    # resp.url: the actual url of the page
-    # resp.status: the status code returned by the server. 200 is OK, you got the page. Other numbers mean that there was some kind of problem.
-    # resp.error: when status is not 200, you can check the error here, if needed.
-    # resp.raw_response: this is where the page actually is. More specifically, the raw_response has two parts:
-    #         resp.raw_response.url: the url, again
-    #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     hyperlinks = set()  
     for link in links:
@@ -423,8 +422,8 @@ def extract_next_links(url, resp, links):
         if url is not None:
             url = change_url_to_absolute(url, resp)
 
-        if is_valid(url):
-            hyperlinks.add(url)
+            if is_valid(url):
+                hyperlinks.add(url)
             #print(url)
     return list(hyperlinks)
 
@@ -440,13 +439,13 @@ def is_valid(url):
         if not re.match(r"(.+?\.)?(ics|cs|informatics|stat)\.uci\.edu", parsed.netloc):
             return False
         #avoids queries that involve actions
-        #if re.match(r"share|attachment|rev|action|do", parsed.query):
-        #    return False
+        if re.match(r"share|attachment|action", parsed.query):
+            return False
         for domain in Our_Scraper.data["Blacklist"]:
             if re.match(domain, url):
                 return False
         #avoids calendar traps
-        if re.match(r"(\d{4}-\d{2}-\d{2})|(\d{2}-\d{2}-\d{4})|(\d{2}-\d{2}-\d{2})|(\d{4}-\d{2})|(\d{2}-\d{4})", url):
+        if re.match(r".*(\d{4}-\d{2}-\d{2})|(\d{2}-\d{2}-\d{4})|(\d{2}-\d{2}-\d{2})|(\d{4}-\d{2})|(\d{2}-\d{4}).*", url):
             return False
         #avoids image files
         if re.match(r"img", url):
@@ -462,7 +461,7 @@ def is_valid(url):
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz|apk|bib)$", parsed.path.lower())
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz|apk|bib|odc|ova|ppsx)$", parsed.path.lower())
     except TypeError:
         print ("TypeError for ", parsed)
         raise
